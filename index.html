@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Casefile — Registration Tracker Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F7F5EF;
+    --paper-raised: #FFFFFF;
+    --ink: #202A36;
+    --ink-soft: #5B6472;
+    --line: #DFD9CB;
+    --seal: #96602F;
+    --seal-soft: #F1E4D4;
+    --amber: #B4842E;
+    --amber-soft: #F6ECD9;
+    --green: #3F6B4A;
+    --green-soft: #E4EEE5;
+    --focus: #3B5B82;
+    --focus-soft: #E4EAF1;
+    --danger: #A23B33;
+    --serif: 'Source Serif 4', Georgia, serif;
+    --sans: 'Inter', -apple-system, sans-serif;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1B1E22; --paper-raised: #23262B; --ink: #ECE7DC; --ink-soft: #A7A296;
+      --line: #383B40; --seal-soft: #33291F; --amber-soft: #332C1C; --green-soft: #1E2A21; --focus-soft: #202B38;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1B1E22; --paper-raised: #23262B; --ink: #ECE7DC; --ink-soft: #A7A296;
+    --line: #383B40; --seal-soft: #33291F; --amber-soft: #332C1C; --green-soft: #1E2A21; --focus-soft: #202B38;
+  }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); min-height: 100%; }
+  html, body { height: 100%; }
+
+  .topbar {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+    background: var(--paper); border-bottom: 1px solid var(--line);
+    padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: baseline; gap: 8px; }
+  .brand .mark { font-family: var(--serif); font-weight: 600; font-size: 20px; }
+  .brand .tag { font-size: 12px; color: var(--ink-soft); }
+  .topright { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .viewswitch { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .viewswitch button {
+    border: none; background: var(--paper-raised); color: var(--ink-soft); font-family: var(--sans);
+    font-size: 13px; font-weight: 600; padding: 8px 14px; cursor: pointer;
+  }
+  .viewswitch button.active { background: var(--ink); color: var(--paper); }
+  .demo-note { font-size: 11px; color: var(--ink-soft); max-width: 240px; line-height: 1.4; }
+
+  .layout { display: grid; grid-template-columns: 300px 1fr; gap: 0; min-height: calc(100% - 60px); }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
+  .rail { border-right: 1px solid var(--line); padding: 20px 16px; background: var(--paper); }
+  .rail h2 { font-family: var(--serif); font-size: 16px; margin: 0 0 4px; }
+  .rail .sub { font-size: 12px; color: var(--ink-soft); margin-bottom: 18px; }
+
+  .flags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+  .flag {
+    font-size: 11px; font-weight: 600; padding: 5px 9px; border-radius: 20px;
+    border: 1px solid var(--line); color: var(--ink-soft); cursor: pointer; user-select: none;
+    background: var(--paper-raised);
+  }
+  .flag.on { background: var(--seal-soft); border-color: var(--seal); color: var(--seal); }
+  .flag.locked { cursor: default; opacity: .55; }
+
+  .steps { list-style: none; margin: 0; padding: 0; position: relative; }
+  .step { display: flex; gap: 10px; padding: 10px 8px; border-radius: 8px; cursor: pointer; position: relative; align-items: flex-start; }
+  .step:hover { background: var(--paper-raised); }
+  .step.selected { background: var(--paper-raised); box-shadow: inset 3px 0 0 var(--seal); }
+  .dot {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); flex: none;
+    display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+    margin-top: 2px; background: var(--paper-raised);
+  }
+  .dot.done { background: var(--green); border-color: var(--green); color: #fff; }
+  .dot.waiting { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+  .dot.progress { background: var(--focus-soft); border-color: var(--focus); color: var(--focus); }
+  .step .label { font-size: 13.5px; font-weight: 500; line-height: 1.35; }
+  .step .status-line { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+
+  .main { padding: 28px 32px; overflow-x: auto; }
+  @media (max-width: 860px) { .main { padding: 20px 16px; } }
+  .case-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 26px; }
+  .case-head h1 { font-family: var(--serif); font-size: 26px; margin: 0 0 4px; }
+  .case-head .addr { color: var(--ink-soft); font-size: 14px; }
+  .progress-pill { font-size: 12px; font-weight: 600; color: var(--ink-soft); border: 1px solid var(--line); padding: 6px 12px; border-radius: 20px; white-space: nowrap; }
+
+  .panel { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px; padding: 22px 24px; margin-bottom: 20px; }
+  .panel h3 { font-family: var(--serif); font-size: 18px; margin: 0 0 10px; }
+  .explainer { font-size: 14px; line-height: 1.6; color: var(--ink-soft); margin: 0 0 16px; max-width: 62ch; }
+
+  .statusbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .statuschip { font-size: 12px; font-weight: 700; padding: 5px 11px; border-radius: 20px; }
+  .statuschip.pending { background: var(--line); color: var(--ink-soft); }
+  .statuschip.in_progress { background: var(--focus-soft); color: var(--focus); }
+  .statuschip.waiting_client { background: var(--amber-soft); color: var(--amber); }
+  .statuschip.done { background: var(--green-soft); color: var(--green); }
+
+  .btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
+  button.act {
+    font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 9px 15px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink); cursor: pointer;
+  }
+  button.act.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  button.act.approve { background: var(--green); color: #fff; border-color: var(--green); }
+  button.act.request { background: var(--danger); color: #fff; border-color: var(--danger); }
+  button.act:disabled { opacity: .4; cursor: default; }
+
+  .proofbox { margin-top: 14px; padding: 12px 14px; background: var(--green-soft); border-radius: 8px; font-size: 13px; color: var(--green); }
+  .proofbox strong { display: block; margin-bottom: 3px; font-size: 12.5px; }
+  .proof-files { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .proof-files a {
+    font-size: 11px; padding: 5px 9px; border-radius: 6px; border: 1px solid var(--line);
+    background: var(--paper-raised); color: var(--ink); text-decoration: none;
+  }
+
+  .docs { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .doc { border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 13px; }
+  .doc .name { font-weight: 600; margin-bottom: 3px; }
+  .doc .meta { font-size: 11px; color: var(--ink-soft); margin-bottom: 8px; }
+  .doc button { font-size: 11px; padding: 5px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); cursor: pointer; margin-right: 6px; }
+  .doc button:disabled { opacity: .5; cursor: default; }
+  .lockrow { font-size: 11px; color: var(--ink-soft); margin-top: 10px; }
+
+  .thread { display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto; margin-bottom: 14px; padding-right: 4px; }
+  .msg { max-width: 75%; padding: 9px 12px; border-radius: 10px; font-size: 13.5px; line-height: 1.45; }
+  .msg.staff { align-self: flex-start; background: var(--paper); border: 1px solid var(--line); }
+  .msg.client { align-self: flex-end; background: var(--seal-soft); }
+  .msg .meta { display: block; font-size: 10.5px; color: var(--ink-soft); margin-top: 3px; }
+
+  .canned { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .canned span { font-size: 11px; padding: 5px 10px; border-radius: 20px; border: 1px dashed var(--line); color: var(--ink-soft); cursor: pointer; user-select: none; }
+  .canned span:hover { border-color: var(--seal); color: var(--seal); }
+
+  .composer { display: flex; gap: 8px; }
+  .composer textarea { flex: 1; font-family: var(--sans); font-size: 13.5px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); resize: vertical; min-height: 44px; background: var(--paper); color: var(--ink); }
+
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--paper-raised); border-radius: 10px; padding: 24px; max-width: 440px; width: 100%; max-height: 86vh; overflow-y: auto; }
+  .modal h4 { font-family: var(--serif); margin: 0 0 10px; font-size: 18px; }
+  .modal p { font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; margin: 0 0 6px; }
+  .modal textarea { width: 100%; font-family: var(--sans); font-size: 13px; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); margin: 8px 0; }
+  .modal input[type="file"] { font-size: 12px; margin-top: 4px; }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="mark">📜 Casefile</span>
+    <span class="tag">Sale Deed Registration — Demo Case</span>
+  </div>
+  <div class="topright">
+    <div class="viewswitch">
+      <button id="btnStaff" class="active">Staff view</button>
+      <button id="btnClient">Client view</button>
+    </div>
+    <button class="act" id="btnUndo" disabled>↺ Undo</button>
+  </div>
+  <div class="demo-note">Local demo only — data lives in this browser. Toggling views simulates staff vs. client.</div>
+</div>
+
+<div class="layout">
+  <div class="rail">
+    <h2>Rahul &amp; Meena's Flat</h2>
+    <div class="sub">Whitefield, Bengaluru</div>
+    <div id="flagsWrap"></div>
+    <ul class="steps" id="stepsList"></ul>
+  </div>
+  <div class="main" id="mainPanel"></div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<script>
+const STORAGE_KEY = 'casefile_demo_v4';
+
+const STAGE_TEMPLATE = [
+  { id: 'agreement', name: 'Sale Agreement drafted', explainer: 'The Sale Agreement is prepared on 0.5% stamp paper. Please read it carefully — you can request changes to consideration amount, schedule, or party details before we move on.', approval: true, cond: null },
+  { id: 'agreement_stamp', name: 'Stamp duty on agreement paid', explainer: 'Stamp duty (0.5% of consideration) is paid on the e-stamp paper the agreement is printed on. This amount is later adjusted against the Sale Deed\'s stamp duty.', approval: false, cond: null },
+  { id: 'poa', name: 'Power of Attorney adjudicated', explainer: 'Since one party is acting through a POA, it needs to be adjudicated and verified before it can be used at registration.', approval: false, cond: 'hasPOA' },
+  { id: 'deed_draft', name: 'Sale Deed drafted', explainer: 'This is the main legal document that transfers ownership. Please review it fully — once you approve, we move straight to the Kaveri portal.', approval: true, cond: null },
+  { id: 'ekhata', name: 'e-Khata verified', explainer: 'e-Khata confirms the property is recorded in the buyer\'s name for tax purposes after registration. Upload the confirmation once you have it, and we move straight to the next step.', approval: false, cond: null },
+  { id: 'kaveri', name: 'Uploaded to Kaveri portal', explainer: 'Karnataka\'s official government system for property registration. Both your and the other party\'s Aadhaar numbers must be linked to an active mobile number, since OTP verification happens here — this is a common hold-up, so please double check this in advance.', approval: false, cond: null },
+  { id: 'stamp_payment', name: 'Stamp duty & registration fee paid', explainer: 'The government fee (stamp duty + registration fee) calculated by the Kaveri portal is paid online. This is separate from the earlier agreement stamp duty.', approval: false, cond: null },
+  { id: 'slot', name: 'Sub-Registrar slot booked', explainer: 'We book your preferred date and time at the Sub-Registrar\'s office for final registration. Screenshot of the booking and the payment challan are attached here once confirmed.', approval: false, cond: null },
+  { id: 'registration', name: 'Registration day', explainer: 'Both parties attend in person for thumb impression, photo and OTP authentication. We\'ll attach a photo of the completed deed here once it\'s done.', approval: true, cond: null },
+  { id: 'handover', name: 'Loan handover to seller', explainer: 'Since this purchase involves a home loan, the bank collects the registered deed, e-Khata and Encumbrance Certificate before releasing final payment to the seller.', approval: false, cond: 'hasLoan' },
+];
+
+const CANNED_RESPONSES = [
+  { tag: 'TDS', text: 'For properties above ₹50 lakh, 1% TDS must be deducted by the buyer and deposited via Form 26QB before registration. We\'ll share the challan copy once filed.' },
+  { tag: 'Stamp Duty', text: 'Stamp duty in Karnataka is 5% of the property value or guidance value, whichever is higher, plus 1% registration fee. There\'s no separate concession for first-time buyers currently.' },
+  { tag: 'Aadhaar OTP', text: 'Both parties\' Aadhaar numbers need to be linked to a mobile number that can receive OTPs, since the Kaveri portal authenticates identity this way. Please check this is active before our slot.' },
+  { tag: 'e-Khata', text: 'e-Khata is the digital property record used for tax and ownership verification — registration cannot proceed without it, so we always confirm it early in the process.' },
+];
+
+const DOCUMENT_TYPES = [
+  { id: 'aadhaar_seller', name: 'Aadhaar — Seller' },
+  { id: 'aadhaar_buyer', name: 'Aadhaar — Buyer' },
+  { id: 'pan_buyer', name: 'PAN — Buyer' },
+  { id: 'ekhata', name: 'e-Khata Certificate' },
+  { id: 'tax_receipt', name: 'Property Tax Receipt' },
+  { id: 'prev_deed', name: 'Previous Sale Deed' },
+];
+
+function defaultCase() {
+  return { flags: { hasPOA: true, hasLoan: true }, stageData: {}, messages: {}, documents: {}, selectedStage: 'agreement' };
+}
+
+function load() {
+  try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
+  return seed();
+}
+
+function seed() {
+  const c = defaultCase();
+  const order = visibleStages(c.flags);
+  order.forEach((s, i) => {
+    c.stageData[s.id] = {
+      status: i === 0 ? 'in_progress' : 'pending',
+      proofNote: '',
+      files: [],
+      approved: false,
+    };
+  });
+  c.messages['agreement'] = [
+    { from: 'staff', text: 'Hi Meena, we\'ve got all the documents in — starting on the draft Sale Agreement now.', ts: 'Yesterday, 4:12 PM' },
+    { from: 'client', text: 'Great, thank you! Quick question in the meantime — does the 0.5% stamp duty count toward the final registration cost?', ts: 'Yesterday, 6:30 PM' },
+  ];
+  save(c);
+  return c;
+}
+
+let state = load();
+let currentView = 'staff';
+let historyStack = [];
+
+function save(c) { localStorage.setItem(STORAGE_KEY, JSON.stringify(c || state)); }
+
+function pushHistory() {
+  historyStack.push(JSON.parse(JSON.stringify(state)));
+  if (historyStack.length > 30) historyStack.shift();
+}
+
+function visibleStages(flags) { return STAGE_TEMPLATE.filter(s => !s.cond || flags[s.cond]); }
+
+function ensureStageData() {
+  visibleStages(state.flags).forEach((s) => {
+    if (!state.stageData[s.id]) state.stageData[s.id] = { status: 'pending', proofNote: '', files: [], approved: false };
+    if (!state.stageData[s.id].files) state.stageData[s.id].files = [];
+  });
+}
+
+function ensureDocuments() {
+  if (!state.documents) state.documents = {};
+  DOCUMENT_TYPES.forEach(dt => {
+    if (!state.documents[dt.id]) state.documents[dt.id] = { uploaded: false, fileName: '', dataUrl: '', uploadedAt: '' };
+  });
+}
+
+function statusLabel(st) {
+  if (st === 'done') return 'Done';
+  if (st === 'waiting_client') return 'Waiting on you';
+  if (st === 'in_progress') return 'In progress';
+  return 'Pending';
+}
+
+function advanceIfPossible(stageId) {
+  const stages = visibleStages(state.flags);
+  const idx = stages.findIndex(s => s.id === stageId);
+  if (idx > -1 && idx < stages.length - 1) state.selectedStage = stages[idx + 1].id;
+}
+
+function renderFlags() {
+  const wrap = document.getElementById('flagsWrap');
+  const isStaff = currentView === 'staff';
+  const defs = [ { key: 'hasPOA', label: 'Has POA' }, { key: 'hasLoan', label: 'Has Loan' } ];
+  wrap.innerHTML = `<div class="flags">${defs.map(d => `
+    <span class="flag ${state.flags[d.key] ? 'on' : ''} ${isStaff ? '' : 'locked'}" data-key="${d.key}">${d.label}${state.flags[d.key] ? ' ✓' : ''}</span>
+  `).join('')}</div>`;
+  if (isStaff) {
+    wrap.querySelectorAll('.flag').forEach(el => {
+      el.addEventListener('click', () => {
+        pushHistory();
+        const key = el.dataset.key;
+        state.flags[key] = !state.flags[key];
+        ensureStageData();
+        save();
+        renderAll();
+      });
+    });
+  }
+}
+
+function renderSteps() {
+  const list = document.getElementById('stepsList');
+  const stages = visibleStages(state.flags);
+  list.innerHTML = stages.map((s) => {
+    const d = state.stageData[s.id] || { status: 'pending' };
+    const dotClass = d.status === 'done' ? 'done' : d.status === 'waiting_client' ? 'waiting' : d.status === 'in_progress' ? 'progress' : '';
+    const dotContent = d.status === 'done' ? '✓' : '';
+    const sel = state.selectedStage === s.id ? 'selected' : '';
+    return `<li class="step ${sel}" data-id="${s.id}">
+      <div class="dot ${dotClass}">${dotContent}</div>
+      <div><div class="label">${s.name}</div><div class="status-line">${statusLabel(d.status)}</div></div>
+    </li>`;
+  }).join('');
+  list.querySelectorAll('.step').forEach(el => {
+    el.addEventListener('click', () => { state.selectedStage = el.dataset.id; save(); renderAll(); });
+  });
+}
+
+function progressText() {
+  const stages = visibleStages(state.flags);
+  const done = stages.filter(s => (state.stageData[s.id] || {}).status === 'done').length;
+  return `${done} of ${stages.length} stages complete`;
+}
+
+function renderMain() {
+  const stage = STAGE_TEMPLATE.find(s => s.id === state.selectedStage);
+  const data = state.stageData[stage.id] || { status: 'pending', proofNote: '', files: [] };
+  const isStaff = currentView === 'staff';
+
+  let actionsHtml = '';
+  if (isStaff) {
+    const btns = [];
+    btns.push(`<button class="act" data-a="mark_progress" ${data.status !== 'pending' ? 'disabled' : ''}>Mark in progress</button>`);
+    if (stage.approval) {
+      const label = data.status === 'waiting_client' ? 'Revise & resend draft' : 'Send draft for review';
+      btns.push(`<button class="act primary" data-a="send_draft" ${data.status === 'pending' || data.status === 'done' ? 'disabled' : ''}>${label}</button>`);
+    } else {
+      btns.push(`<button class="act" data-a="mark_done" ${data.status === 'done' ? 'disabled' : ''}>Mark done + attach proof</button>`);
+    }
+    actionsHtml = `<div class="btnrow">${btns.join('')}</div>`;
+  } else {
+    if (data.status === 'waiting_client' && stage.approval) {
+      actionsHtml = `<div class="btnrow">
+        <button class="act approve" data-a="approve">Approve, looks good</button>
+        <button class="act request" data-a="request_changes">Request changes</button>
+      </div>`;
+    } else if (data.status === 'done') {
+      actionsHtml = `<div class="btnrow"><button class="act" disabled>Completed</button></div>`;
+    } else if (data.status === 'in_progress') {
+      actionsHtml = `<div class="btnrow"><button class="act" disabled>Your coordinator is working on this</button></div>`;
+    } else {
+      actionsHtml = `<div class="btnrow"><button class="act" disabled>Nothing needed from you right now</button></div>`;
+    }
+  }
+
+  const files = data.files || [];
+  const proofLabel = (data.status === 'waiting_client' && stage.approval) ? 'Draft attached for your review' : 'Proof attached by coordinator';
+  const proofHtml = (data.proofNote || files.length) ? `<div class="proofbox">
+    <strong>${proofLabel}</strong>${escapeHtml(data.proofNote || '')}
+    ${files.length ? `<div class="proof-files">${files.map(f => `<a href="${f.dataUrl}" download="${escapeAttr(f.name)}">📎 ${escapeHtml(f.name)}</a>`).join('')}</div>` : ''}
+  </div>` : '';
+
+  const msgs = state.messages[stage.id] || [];
+  const threadHtml = msgs.map(m => `<div class="msg ${m.from}">${escapeHtml(m.text)}<span class="meta">${m.from === 'staff' ? 'Coordinator' : 'Client'} · ${m.ts}</span></div>`).join('')
+    || `<div style="font-size:13px;color:var(--ink-soft);">No messages yet on this stage.</div>`;
+
+  const cannedHtml = isStaff ? `<div class="canned">${CANNED_RESPONSES.map((c, i) => `<span data-i="${i}">+ ${c.tag}</span>`).join('')}</div>` : '';
+
+  const docsHtml = `<div class="docs">
+    ${DOCUMENT_TYPES.map(dt => {
+      const doc = state.documents[dt.id];
+      const metaLine = doc.uploaded ? `Uploaded ${doc.uploadedAt}` : (isStaff ? 'Not yet uploaded' : 'Not uploaded yet');
+      let btns = '';
+      if (isStaff) {
+        btns = `<button ${doc.uploaded ? '' : 'disabled'} onclick="openDocModal('${dt.id}')">${doc.uploaded ? 'View (no download)' : 'Not available'}</button>`;
+      } else if (doc.uploaded) {
+        btns = `<button onclick="openDocModal('${dt.id}')">View</button> <button data-upload="${dt.id}">Replace</button>`;
+      } else {
+        btns = `<button data-upload="${dt.id}">Upload</button>`;
+      }
+      return `<div class="doc">
+        <div class="name">${dt.name}${doc.uploaded ? ' ✓' : ''}</div>
+        <div class="meta">${metaLine}</div>
+        ${btns}
+      </div>`;
+    }).join('')}
+  </div>
+  <div class="lockrow">${isStaff ? 'Staff access is view-only and logged. Files cannot be exported from this vault.' : 'Only your assigned coordinator can view these — every access is logged and available to you on request.'}</div>`;
+
+  document.getElementById('mainPanel').innerHTML = `
+    <div class="case-head">
+      <div><h1>Rahul &amp; Meena's Flat</h1><div class="addr">Whitefield, Bengaluru · Sale Deed Registration</div></div>
+      <div class="progress-pill">${progressText()}</div>
+    </div>
+    <div class="panel">
+      <div class="statusbar"><h3 style="margin:0;">${stage.name}</h3><span class="statuschip ${data.status}">${statusLabel(data.status)}</span></div>
+      <p class="explainer">${stage.explainer}</p>
+      ${actionsHtml}
+      ${proofHtml}
+    </div>
+    <div class="panel"><h3>Documents</h3>${docsHtml}</div>
+    <div class="panel">
+      <h3>Questions on this stage</h3>
+      <div class="thread" id="thread">${threadHtml}</div>
+      ${cannedHtml}
+      <div class="composer">
+        <textarea id="msgBox" placeholder="${isStaff ? 'Reply to the client, or click a canned response above to insert it…' : 'Ask a question about this stage…'}"></textarea>
+        <button class="act primary" id="sendMsg">Send</button>
+      </div>
+    </div>
+  `;
+
+  if (isStaff) {
+    document.querySelectorAll('[data-a]').forEach(btn => btn.addEventListener('click', () => handleStaffAction(btn.dataset.a, stage.id)));
+    document.querySelectorAll('.canned span').forEach(el => el.addEventListener('click', () => {
+      const c = CANNED_RESPONSES[el.dataset.i];
+      const box = document.getElementById('msgBox');
+      box.value = (box.value ? box.value + '\n' : '') + c.text;
+      box.focus();
+    }));
+  } else {
+    document.querySelectorAll('[data-a]').forEach(btn => btn.addEventListener('click', () => handleClientAction(btn.dataset.a, stage.id)));
+    document.querySelectorAll('[data-upload]').forEach(btn => btn.addEventListener('click', () => triggerDocUpload(btn.dataset.upload)));
+  }
+
+  document.getElementById('sendMsg').addEventListener('click', () => sendMessage(stage.id));
+  const thread = document.getElementById('thread');
+  thread.scrollTop = thread.scrollHeight;
+}
+
+// ---- Modal system ----
+function openModal(html) {
+  document.getElementById('modalBox').innerHTML = html;
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+function closeModal() { document.getElementById('modalBackdrop').classList.remove('open'); }
+
+function confirmModal(message, onYes) {
+  openModal(`
+    <h4>Please confirm</h4>
+    <p>${escapeHtml(message)}</p>
+    <div class="btnrow" style="margin-top:14px;">
+      <button class="act" id="cmCancel">Cancel</button>
+      <button class="act primary" id="cmYes">Confirm</button>
+    </div>
+  `);
+  document.getElementById('cmCancel').addEventListener('click', closeModal);
+  document.getElementById('cmYes').addEventListener('click', () => { closeModal(); onYes(); });
+}
+
+function openDocModal(docId) {
+  const dt = DOCUMENT_TYPES.find(d => d.id === docId);
+  const doc = state.documents[docId];
+  if (!doc || !doc.uploaded) {
+    openModal(`<h4>${escapeHtml(dt.name)}</h4><p>Not uploaded yet.</p><div class="btnrow" style="margin-top:14px;"><button class="act" id="dmClose">Close</button></div>`);
+    document.getElementById('dmClose').addEventListener('click', closeModal);
+    return;
+  }
+  let preview = '';
+  if (doc.dataUrl.startsWith('data:image')) {
+    preview = `<img src="${doc.dataUrl}" style="max-width:100%;border-radius:8px;border:1px solid var(--line);margin:10px 0;" />`;
+  } else if (doc.dataUrl.startsWith('data:application/pdf')) {
+    preview = `<embed src="${doc.dataUrl}" type="application/pdf" style="width:100%;height:340px;border-radius:8px;border:1px solid var(--line);margin:10px 0;" />`;
+  }
+  const isStaff = currentView === 'staff';
+  openModal(`
+    <h4>${escapeHtml(dt.name)}</h4>
+    <p>${escapeHtml(doc.fileName)} · Uploaded ${escapeHtml(doc.uploadedAt)}</p>
+    ${preview}
+    ${isStaff ? '<p style="font-size:11.5px;">This view is logged against the coordinator\'s account — no download or print option.</p>' : ''}
+    <div class="btnrow" style="margin-top:14px;"><button class="act" id="dmClose">Close</button></div>
+  `);
+  document.getElementById('dmClose').addEventListener('click', closeModal);
+}
+
+function triggerDocUpload(docId) {
+  const doc = state.documents[docId];
+  const doPick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/pdf,image/*';
+    input.addEventListener('change', async () => {
+      if (!input.files.length) return;
+      const [f] = await filesToDataUrls(input.files);
+      pushHistory();
+      state.documents[docId] = { uploaded: true, fileName: f.name, dataUrl: f.dataUrl, uploadedAt: 'Just now' };
+      save();
+      renderAll();
+    });
+    input.click();
+  };
+  if (doc && doc.uploaded) {
+    confirmModal('Replace the current file with a new upload? The previous file will no longer be available.', doPick);
+  } else {
+    doPick();
+  }
+}
+
+function filesToDataUrls(fileList) {
+  return Promise.all(Array.from(fileList).map(f => new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve({ name: f.name, dataUrl: r.result });
+    r.onerror = reject;
+    r.readAsDataURL(f);
+  })));
+}
+
+function openAttachModal(stageId) {
+  const stage = STAGE_TEMPLATE.find(s => s.id === stageId);
+  openModal(`
+    <h4>Mark "${escapeHtml(stage.name)}" as done</h4>
+    <p>Add a short note and attach a file (PDF or image) as proof — this becomes visible to the client too. You can attach more than one, e.g. a screenshot and a payment challan.</p>
+    <textarea id="attachNote" style="min-height:60px;" placeholder="e.g. Verified and confirmed."></textarea>
+    <input type="file" id="attachFiles" accept="application/pdf,image/*" multiple />
+    <div id="attachFileList" style="margin-top:8px;font-size:11px;color:var(--ink-soft);"></div>
+    <div class="btnrow" style="margin-top:16px;">
+      <button class="act" id="attachCancel">Cancel</button>
+      <button class="act primary" id="attachSubmit">Mark done</button>
+    </div>
+  `);
+  const fileInput = document.getElementById('attachFiles');
+  fileInput.addEventListener('change', () => {
+    document.getElementById('attachFileList').textContent = fileInput.files.length ? Array.from(fileInput.files).map(f => f.name).join(', ') : '';
+  });
+  document.getElementById('attachCancel').addEventListener('click', closeModal);
+  document.getElementById('attachSubmit').addEventListener('click', async () => {
+    const note = document.getElementById('attachNote').value.trim();
+    let files = [];
+    if (fileInput.files.length) {
+      try { files = await filesToDataUrls(fileInput.files); } catch (e) { files = []; }
+    }
+    pushHistory();
+    const d = state.stageData[stageId];
+    d.status = 'done';
+    d.proofNote = note || 'Marked done.';
+    d.files = (d.files || []).concat(files);
+    closeModal();
+    save();
+    advanceIfPossible(stageId);
+    renderAll();
+  });
+}
+
+function openSendDraftModal(stageId) {
+  const stage = STAGE_TEMPLATE.find(s => s.id === stageId);
+  const isRevision = state.stageData[stageId].status === 'waiting_client';
+  openModal(`
+    <h4>${isRevision ? 'Resend revised draft' : 'Send draft for review'} — ${escapeHtml(stage.name)}</h4>
+    <p>Attach the draft file for the client to review. They'll see it on their side along with Approve / Request Changes.</p>
+    <textarea id="draftNote" style="min-height:60px;" placeholder="e.g. Draft v1 attached, please check the schedule and amount."></textarea>
+    <input type="file" id="draftFiles" accept="application/pdf,image/*" multiple />
+    <div id="draftFileList" style="margin-top:8px;font-size:11px;color:var(--ink-soft);"></div>
+    <div id="draftError" style="margin-top:8px;font-size:12px;color:var(--danger);display:none;">Please attach at least one file — the client needs the draft itself, not just a note.</div>
+    <div class="btnrow" style="margin-top:16px;">
+      <button class="act" id="draftCancel">Cancel</button>
+      <button class="act primary" id="draftSubmit">${isRevision ? 'Resend to client' : 'Send to client'}</button>
+    </div>
+  `);
+  const fileInput = document.getElementById('draftFiles');
+  fileInput.addEventListener('change', () => {
+    document.getElementById('draftFileList').textContent = fileInput.files.length ? Array.from(fileInput.files).map(f => f.name).join(', ') : '';
+  });
+  document.getElementById('draftCancel').addEventListener('click', closeModal);
+  document.getElementById('draftSubmit').addEventListener('click', async () => {
+    if (!fileInput.files.length) { document.getElementById('draftError').style.display = 'block'; return; }
+    const note = document.getElementById('draftNote').value.trim();
+    let files = [];
+    try { files = await filesToDataUrls(fileInput.files); } catch (e) { files = []; }
+    pushHistory();
+    const d = state.stageData[stageId];
+    d.status = 'waiting_client';
+    d.proofNote = note || (isRevision ? 'Revised draft attached.' : 'Draft attached for your review.');
+    d.files = (d.files || []).concat(files);
+    closeModal();
+    save();
+    if (isRevision) pushMessage(stageId, 'staff', 'We\'ve sent a revised draft — please take a look.');
+    save();
+    renderAll();
+  });
+}
+
+function openRequestChangesModal(stageId) {
+  openModal(`
+    <h4>Request changes</h4>
+    <p>Tell your coordinator what needs to change.</p>
+    <textarea id="rcText" style="min-height:80px;" placeholder="e.g. Please correct the survey number in the schedule."></textarea>
+    <div class="btnrow" style="margin-top:12px;">
+      <button class="act" id="rcCancel">Cancel</button>
+      <button class="act request" id="rcSubmit">Send request</button>
+    </div>
+  `);
+  document.getElementById('rcCancel').addEventListener('click', closeModal);
+  document.getElementById('rcSubmit').addEventListener('click', () => {
+    const text = document.getElementById('rcText').value.trim();
+    if (!text) return;
+    pushHistory();
+    state.stageData[stageId].status = 'in_progress';
+    pushMessage(stageId, 'client', 'Requesting changes: ' + text);
+    closeModal();
+    save();
+    renderAll();
+  });
+}
+
+// ---- Action handlers ----
+function handleStaffAction(action, stageId) {
+  if (action === 'mark_done') { openAttachModal(stageId); return; }
+  if (action === 'send_draft') { openSendDraftModal(stageId); return; }
+  if (action === 'mark_progress') {
+    confirmModal('Mark this stage as in progress? Use this once you have the documents you need and are starting work on it.', () => {
+      pushHistory();
+      state.stageData[stageId].status = 'in_progress';
+      save(); renderAll();
+    });
+    return;
+  }
+}
+
+function handleClientAction(action, stageId) {
+  if (action === 'approve') {
+    confirmModal('Approve this stage? Your coordinator will be notified to proceed to the next step.', () => {
+      pushHistory();
+      const d = state.stageData[stageId];
+      d.approved = true;
+      d.status = 'done';
+      if (!d.proofNote) d.proofNote = 'Client approved this stage.';
+      pushMessage(stageId, 'client', 'Approved — looks good, please proceed to the next step.');
+      save();
+      advanceIfPossible(stageId);
+      renderAll();
+    });
+    return;
+  }
+  if (action === 'request_changes') { openRequestChangesModal(stageId); return; }
+}
+
+function sendMessage(stageId) {
+  const box = document.getElementById('msgBox');
+  const text = box.value.trim();
+  if (!text) return;
+  pushHistory();
+  pushMessage(stageId, currentView === 'staff' ? 'staff' : 'client', text);
+  save();
+  renderAll();
+}
+
+function pushMessage(stageId, from, text) {
+  if (!state.messages[stageId]) state.messages[stageId] = [];
+  state.messages[stageId].push({ from, text, ts: 'Just now' });
+}
+
+function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;'); }
+
+function renderAll() {
+  ensureStageData();
+  ensureDocuments();
+  if (!visibleStages(state.flags).find(s => s.id === state.selectedStage)) {
+    state.selectedStage = visibleStages(state.flags)[0].id;
+  }
+  renderFlags();
+  renderSteps();
+  renderMain();
+  document.getElementById('btnUndo').disabled = historyStack.length === 0;
+}
+
+document.getElementById('btnStaff').addEventListener('click', () => { currentView = 'staff'; setActiveBtn(); renderAll(); });
+document.getElementById('btnClient').addEventListener('click', () => { currentView = 'client'; setActiveBtn(); renderAll(); });
+document.getElementById('btnUndo').addEventListener('click', () => {
+  if (!historyStack.length) return;
+  confirmModal('Undo the last action? This reverts the most recent change.', () => {
+    state = historyStack.pop();
+    save();
+    renderAll();
+  });
+});
+function setActiveBtn() {
+  document.getElementById('btnStaff').classList.toggle('active', currentView === 'staff');
+  document.getElementById('btnClient').classList.toggle('active', currentView === 'client');
+}
+
+ensureStageData();
+save();
+renderAll();
+</script>
+</body>
+</html>
