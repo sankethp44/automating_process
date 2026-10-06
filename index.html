@@ -1,160 +1,672 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Casefile Portal</title>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Casefile — Registration Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--paper:#F7F5EF;--raised:#fff;--ink:#202A36;--soft:#5B6472;--line:#DFD9CB;--seal:#96602F;--green:#3F6B4A;--gs:#E4EEE5;--red:#A23B33;--rs:#F6E1DE;--amber:#F6ECD9;font-family:Inter,system-ui,sans-serif}
-*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink)}
-.top{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--paper);z-index:5}
-.top b{font-family:Georgia,serif;font-size:19px}
-.card{max-width:380px;margin:60px auto;background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:22px}
-.tabs{display:flex;margin-bottom:14px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.tabs button{flex:1;border:0;padding:9px;background:var(--raised);font-weight:600;cursor:pointer;color:var(--soft)}
-.tabs .on{background:var(--ink);color:var(--paper)}
-input,textarea{width:100%;padding:10px;margin-bottom:10px;border:1px solid var(--line);border-radius:7px;font:inherit;background:var(--paper);color:var(--ink)}
-button{font:inherit;font-size:13px;font-weight:600;padding:8px 13px;border-radius:7px;border:1px solid var(--line);background:var(--raised);cursor:pointer;color:var(--ink)}
-button:disabled{opacity:.4;cursor:default}.pri{background:var(--ink);color:var(--paper);width:100%}
-.ok{background:var(--green)!important;color:#fff!important}.no{background:var(--red)!important;color:#fff!important}
-.err{color:var(--red);font-size:13px;min-height:18px}.sm{font-size:12.5px;color:var(--soft)}
-.lay{display:grid;grid-template-columns:280px 1fr;min-height:calc(100vh - 54px)}
-@media(max-width:800px){.lay{grid-template-columns:1fr}}
-aside{border-right:1px solid var(--line);padding:16px}aside h4{margin:14px 0 8px;font-family:Georgia,serif}
-.row{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:8px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:var(--raised);font-size:13px}
-.row.sel{border-color:var(--seal);box-shadow:inset 3px 0 var(--seal)}
-.wrap,main{padding:22px;max-width:920px}
-.panel{background:var(--raised);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:18px}
-.panel h3{margin:0 0 12px;font-family:Georgia,serif}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
-.doc{border:1px solid var(--line);border-radius:8px;padding:11px;font-size:13px}.doc .m{font-size:11px;color:var(--soft);margin:3px 0 8px}
-.bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-.pv{white-space:pre-wrap;line-height:1.7;padding:14px;border:1px solid var(--line);border-radius:8px;background:var(--paper);min-height:120px}
-ins{background:var(--gs);color:var(--green);text-decoration:none;padding:0 2px;border-radius:3px}
-del{background:var(--rs);color:var(--red);padding:0 2px;border-radius:3px}
-.hb{display:inline-flex;gap:2px;margin-left:3px;vertical-align:middle}.hb button{padding:0 6px;font-size:12px;line-height:20px}
-.badge{display:inline-block;background:var(--amber);color:var(--seal);font-size:12px;padding:3px 10px;border-radius:20px;margin-bottom:10px}
-.modal{position:fixed;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;padding:20px;z-index:9}
-.modal>div{background:var(--raised);padding:18px;border-radius:10px;max-width:700px;width:100%;max-height:90vh;overflow:auto}
-.modal img,.modal iframe{width:100%;border:1px solid var(--line);border-radius:8px;margin:10px 0}.modal iframe{height:60vh}
-textarea#ta,textarea#ae{min-height:240px;line-height:1.6}
-</style></head><body><div id="app"></div>
-<script type="module">
-import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import{getFirestore,doc,getDoc,getDocs,setDoc,updateDoc,collection,query,where,onSnapshot,writeBatch}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  :root {
+    --paper: #F7F5EF; --paper-raised: #FFFFFF; --ink: #202A36; --ink-soft: #5B6472; --line: #DFD9CB;
+    --seal: #96602F; --seal-soft: #F1E4D4; --amber: #B4842E; --amber-soft: #F6ECD9;
+    --green: #3F6B4A; --green-soft: #E4EEE5; --focus: #3B5B82; --focus-soft: #E4EAF1; --danger: #A23B33; --danger-soft: #F5E1DF;
+    --serif: 'Source Serif 4', Georgia, serif; --sans: 'Inter', -apple-system, sans-serif;
+    box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1B1E22; --paper-raised: #23262B; --ink: #ECE7DC; --ink-soft: #A7A296;
+      --line: #383B40; --seal-soft: #33291F; --amber-soft: #332C1C; --green-soft: #1E2A21; --focus-soft: #202B38; --danger-soft: #3A2220;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1B1E22; --paper-raised: #23262B; --ink: #ECE7DC; --ink-soft: #A7A296;
+    --line: #383B40; --seal-soft: #33291F; --amber-soft: #332C1C; --green-soft: #1E2A21; --focus-soft: #202B38; --danger-soft: #3A2220;
+  }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); min-height: 100%; }
+  html, body { height: 100%; }
+  .hidden { display: none !important; }
 
-// ====== 1. PASTE YOUR FIREBASE CONFIG HERE (Project settings → Your apps → Web) ======
-const firebaseConfig={apiKey:"AIzaSyCXJWjqV2RRpg-O_W6Jo3R1WnfWWnFnznw",authDomain:"automatingregistrations.firebaseapp.com",projectId:"automatingregistrations",appId:"1:526527586653:web:bf06a40393548e7fcc48b4"};
-// =====================================================================================
+  .topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--paper); border-bottom: 1px solid var(--line); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: baseline; gap: 8px; }
+  .brand .mark { font-family: var(--serif); font-weight: 600; font-size: 20px; }
+  .brand .tag { font-size: 12px; color: var(--ink-soft); }
+  .topright { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .who { font-size: 12px; color: var(--ink-soft); }
 
-const fb=initializeApp(firebaseConfig),auth=getAuth(fb),db=getFirestore(fb);
-const $=s=>document.querySelector(s),app=$('#app');
-const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const DT=[['aadhaar_seller','Aadhaar — Seller'],['aadhaar_buyer','Aadhaar — Buyer'],['pan_buyer','PAN — Buyer'],['ekhata','e-Khata Certificate'],['tax_receipt','Property Tax Receipt'],['prev_deed','Previous Sale Deed']];
-const CH=700000; // chars per Firestore chunk (doc limit is 1 MiB)
-let S={tab:'client',signup:false,msg:'',subs:[],cs:[],cuid:null,isAdmin:false,mounted:null,d:null,editing:false,pend:[],cli:[]};
-const clear=()=>{S.subs.forEach(u=>u());S.cs.forEach(u=>u());S.subs=[];S.cs=[];S.mounted=null;S.cuid=null;S.editing=false};
-const shell=(inner,out)=>app.innerHTML=`<div class="top"><b>📜 Casefile</b>${out?'<button data-act="out">Sign out</button>':''}</div>${inner}`;
-const mainRef=()=>doc(db,'cases',S.cuid,'docs','main');
+  .layout { display: grid; grid-template-columns: 300px 1fr; gap: 0; min-height: calc(100% - 60px); }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+  .rail { border-right: 1px solid var(--line); padding: 20px 16px; background: var(--paper); }
+  .rail h2 { font-family: var(--serif); font-size: 16px; margin: 0 0 4px; }
+  .rail .sub { font-size: 12px; color: var(--ink-soft); margin-bottom: 18px; }
+  .flags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+  .flag { font-size: 11px; font-weight: 600; padding: 5px 9px; border-radius: 20px; border: 1px solid var(--line); color: var(--ink-soft); cursor: pointer; user-select: none; background: var(--paper-raised); }
+  .flag.on { background: var(--seal-soft); border-color: var(--seal); color: var(--seal); }
+  .flag.locked { cursor: default; opacity: .55; }
+  .steps { list-style: none; margin: 0; padding: 0; position: relative; }
+  .step { display: flex; gap: 10px; padding: 10px 8px; border-radius: 8px; cursor: pointer; position: relative; align-items: flex-start; }
+  .step:hover { background: var(--paper-raised); }
+  .step.selected { background: var(--paper-raised); box-shadow: inset 3px 0 0 var(--seal); }
+  .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-top: 2px; background: var(--paper-raised); }
+  .dot.done { background: var(--green); border-color: var(--green); color: #fff; }
+  .dot.waiting { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+  .dot.progress { background: var(--focus-soft); border-color: var(--focus); color: var(--focus); }
+  .step .label { font-size: 13.5px; font-weight: 500; line-height: 1.35; }
+  .step .status-line { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .step .edited { color: var(--seal); font-weight: 700; }
 
-// ---------- AUTH ----------
-function authView(){const c=S.tab==='client';shell(`<div class="card"><div class="tabs">
-<button data-act="tab" data-t="client" class="${c?'on':''}">Client login</button><button data-act="tab" data-t="admin" class="${c?'':'on'}">Admin login</button></div>
-${S.signup&&c?'<input id="nm" placeholder="Full name">':''}<input id="em" type="email" placeholder="Email"><input id="pw" type="password" placeholder="Password (min 6 chars)">
-<button class="pri" data-act="go">${S.signup&&c?'Request access':'Sign in'}</button><p class="err">${esc(S.msg)}</p>
-${c?`<p class="sm">${S.signup?'Already approved?':'New client?'} <a href="#" data-act="tog">${S.signup?'Sign in':'Request access'}</a></p>`:'<p class="sm">Admin accounts are created by the owner in Firebase.</p>'}</div>`)}
+  .main { padding: 28px 32px; overflow-x: auto; }
+  @media (max-width: 860px) { .main { padding: 20px 16px; } }
+  .case-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 26px; }
+  .case-head h1 { font-family: var(--serif); font-size: 26px; margin: 0 0 4px; }
+  .case-head .addr { color: var(--ink-soft); font-size: 14px; }
+  .progress-pill { font-size: 12px; font-weight: 600; color: var(--ink-soft); border: 1px solid var(--line); padding: 6px 12px; border-radius: 20px; white-space: nowrap; }
 
-onAuthStateChanged(auth,async u=>{clear();if(!u){S.isAdmin=false;return authView()}
- const a=await getDoc(doc(db,'admins',u.uid)).catch(()=>null);
- if(a&&a.exists())return adminView();
- if(S.intent==='admin'){S.msg='This account is not an admin.';return signOut(auth)}
- clientView(u)});
+  .panel { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px; padding: 22px 24px; margin-bottom: 20px; }
+  .panel h3 { font-family: var(--serif); font-size: 18px; margin: 0 0 10px; }
+  .explainer { font-size: 14px; line-height: 1.6; color: var(--ink-soft); margin: 0 0 16px; max-width: 62ch; }
 
-// ---------- CLIENT ----------
-function clientView(u){S.subs.push(onSnapshot(doc(db,'users',u.uid),s=>{
- if(!s.exists())return shell('<div class="card"><p>Setting up your account…</p></div>',1);
- const p=s.data();
- if(p.status==='pending')return shell(`<div class="card"><h3>Hi ${esc(p.name)} 👋</h3><p>Your request is <b>awaiting approval</b>. This page updates automatically as soon as your coordinator approves it.</p></div>`,1);
- if(p.status==='rejected')return shell('<div class="card"><p>Your access request was declined. Please contact your coordinator.</p></div>',1);
- if(S.mounted!==u.uid){S.mounted=u.uid;shell('<div class="wrap" id="case"></div>',1);mountCase(u.uid)}
-}))}
+  .statusbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .statuschip { font-size: 12px; font-weight: 700; padding: 5px 11px; border-radius: 20px; }
+  .statuschip.pending { background: var(--line); color: var(--ink-soft); }
+  .statuschip.in_progress { background: var(--focus-soft); color: var(--focus); }
+  .statuschip.waiting_client { background: var(--amber-soft); color: var(--amber); }
+  .statuschip.done { background: var(--green-soft); color: var(--green); }
 
-// ---------- ADMIN ----------
-function adminView(){S.isAdmin=true;shell('<div class="lay"><aside id="side"></aside><main id="case"><p class="sm">Select a client on the left.</p></main></div>',1);
- S.subs.push(onSnapshot(query(collection(db,'users'),where('status','==','pending')),s=>{S.pend=s.docs.map(d=>({id:d.id,...d.data()}));side()}));
- S.subs.push(onSnapshot(query(collection(db,'users'),where('status','==','approved')),s=>{S.cli=s.docs.map(d=>({id:d.id,...d.data()}));side()}))}
-function side(){const e=$('#side');if(!e)return;
- e.innerHTML=`<h4>Access requests (${S.pend.length})</h4>${S.pend.map(p=>`<div class="row"><span>${esc(p.name)}<br><span class="sm">${esc(p.email)}</span></span><span><button class="ok" data-act="appr" data-id="${p.id}">✓</button> <button class="no" data-act="rej" data-id="${p.id}">✕</button></span></div>`).join('')||'<p class="sm">None pending.</p>'}
- <h4>Clients</h4>${S.cli.map(p=>`<div class="row ${S.cuid===p.id?'sel':''}" data-act="pick" data-id="${p.id}" style="cursor:pointer"><span>${esc(p.name)}</span></div>`).join('')||'<p class="sm">No approved clients yet.</p>'}`}
+  .btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
+  button.act { font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 9px 15px; border-radius: 7px; border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink); cursor: pointer; }
+  button.act.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  button.act.approve { background: var(--green); color: #fff; border-color: var(--green); }
+  button.act.request { background: var(--danger); color: #fff; border-color: var(--danger); }
+  button.act:disabled { opacity: .4; cursor: default; }
 
-// ---------- CASE (shared by both roles) ----------
-function mountCase(uid){S.cs.forEach(u=>u());S.cs=[];S.cuid=uid;S.d=null;S.editing=false;side();
- $('#case').innerHTML=`<div class="panel"><h3>Documents</h3><div class="grid" id="docs"></div></div><div class="panel"><h3>Shared document</h3><div id="ed"></div></div>`;
- S.cs.push(onSnapshot(doc(db,'cases',uid),s=>s.exists()&&renderDocs(s.data().documents||{})));
- S.cs.push(onSnapshot(doc(db,'cases',uid,'docs','main'),s=>{if(!s.exists())return;S.d=s.data();renderEd()}))}
+  .proofbox { margin-top: 14px; padding: 12px 14px; background: var(--green-soft); border-radius: 8px; font-size: 13px; color: var(--green); }
+  .proofbox strong { display: block; margin-bottom: 3px; font-size: 12.5px; }
+  .proof-files { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .proof-files a { font-size: 11px; padding: 5px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink); text-decoration: none; cursor: pointer; }
 
-function renderDocs(m){$('#docs').innerHTML=DT.map(([id,n])=>{const f=m[id];
- return`<div class="doc"><b>${n}${f?' ✓':''}</b><div class="m">${f?esc(f.name)+' · '+new Date(f.at).toLocaleString():'Not uploaded'}</div>
- ${f?`<button data-act="view" data-fid="${f.fid}" data-n="${f.n}">View</button> `:''}${S.isAdmin?'':`<button data-act="up" data-t="${id}">${f?'Replace':'Upload'}</button>`}</div>`}).join('')}
+  .docs { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .doc { border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 13px; }
+  .doc .name { font-weight: 600; margin-bottom: 3px; }
+  .doc .meta { font-size: 11px; color: var(--ink-soft); margin-bottom: 8px; }
+  .doc button { font-size: 11px; padding: 5px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); cursor: pointer; margin-right: 6px; }
+  .doc button:disabled { opacity: .5; cursor: default; }
+  .lockrow { font-size: 11px; color: var(--ink-soft); margin-top: 10px; }
 
-async function toDataUrl(f){if(f.type.startsWith('image/')){const i=await new Promise((r,j)=>{const x=new Image();x.onload=()=>r(x);x.onerror=j;x.src=URL.createObjectURL(f)});
- const k=Math.min(1,1600/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.8)}
- return new Promise((r,j)=>{const x=new FileReader();x.onload=()=>r(x.result);x.onerror=j;x.readAsDataURL(f)})}
+  .thread { display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto; margin-bottom: 14px; padding-right: 4px; }
+  .msg { max-width: 75%; padding: 9px 12px; border-radius: 10px; font-size: 13.5px; line-height: 1.45; }
+  .msg.staff { align-self: flex-start; background: var(--paper); border: 1px solid var(--line); }
+  .msg.client { align-self: flex-end; background: var(--seal-soft); }
+  .msg .meta { display: block; font-size: 10.5px; color: var(--ink-soft); margin-top: 3px; }
+  .canned { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .canned span { font-size: 11px; padding: 5px 10px; border-radius: 20px; border: 1px dashed var(--line); color: var(--ink-soft); cursor: pointer; user-select: none; }
+  .canned span:hover { border-color: var(--seal); color: var(--seal); }
+  .composer { display: flex; gap: 8px; }
+  .composer textarea, textarea.ed { flex: 1; font-family: var(--sans); font-size: 13.5px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); resize: vertical; min-height: 44px; background: var(--paper); color: var(--ink); width: 100%; }
+  textarea.ed { min-height: 220px; line-height: 1.6; margin-bottom: 10px; }
+  textarea.ed:disabled { opacity: .6; }
 
-async function upload(tid,f){try{const d=await toDataUrl(f);if(d.length>3.5e6)return alert('File too large (max about 2.5 MB). Please compress it and retry.');
- const old=(await getDoc(doc(db,'cases',S.cuid))).data().documents?.[tid],fid=tid+'_'+Date.now(),n=Math.ceil(d.length/CH),b=writeBatch(db),at=Date.now();
- for(let i=0;i<n;i++)b.set(doc(db,'cases',S.cuid,'files',fid,'chunks',String(i).padStart(3,'0')),{d:d.slice(i*CH,(i+1)*CH)});
- b.update(doc(db,'cases',S.cuid),{['documents.'+tid]:{fid,name:f.name,n,at}});await b.commit();
- if(old){const x=writeBatch(db);for(let i=0;i<old.n;i++)x.delete(doc(db,'cases',S.cuid,'files',old.fid,'chunks',String(i).padStart(3,'0')));await x.commit()}
- }catch(e){alert('Upload failed: '+e.message)}}
+  /* Track changes */
+  .diff { white-space: pre-wrap; font-size: 14px; line-height: 1.7; border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: var(--paper); margin-bottom: 12px; max-height: 360px; overflow-y: auto; }
+  .diff ins { background: var(--green-soft); color: var(--green); text-decoration: none; border-bottom: 2px solid var(--green); padding: 0 1px; }
+  .diff del { background: var(--danger-soft); color: var(--danger); text-decoration: line-through; padding: 0 1px; }
+  .gb { display: inline-flex; gap: 3px; margin: 0 4px; vertical-align: middle; }
+  .gb button { font-size: 10px; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink); cursor: pointer; }
+  .hist-row { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+  .hist-row small { color: var(--ink-soft); display: block; }
 
-async function view(fid){const s=await getDocs(collection(db,'cases',S.cuid,'files',fid,'chunks')),u=s.docs.map(d=>d.data().d).join('');
- const url=URL.createObjectURL(await(await fetch(u)).blob()),img=u.startsWith('data:image');
- const m=document.createElement('div');m.className='modal';m.innerHTML=`<div>${img?`<img src="${url}">`:`<iframe src="${url}"></iframe>`}<button data-act="close">Close</button></div>`;document.body.append(m)}
+  /* Auth + admin home */
+  .center { min-height: calc(100% - 60px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .authbox { width: 100%; max-width: 400px; margin: 0; }
+  .tabs { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+  .tabs button { flex: 1; border: none; background: var(--paper-raised); color: var(--ink-soft); font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 9px; cursor: pointer; }
+  .tabs button.active { background: var(--ink); color: var(--paper); }
+  .authbox input { width: 100%; font-family: var(--sans); font-size: 14px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); margin-bottom: 10px; }
+  .err { color: var(--danger); font-size: 12.5px; min-height: 16px; margin-bottom: 8px; }
+  .linkbtn { background: none; border: none; color: var(--seal); font-size: 12.5px; cursor: pointer; padding: 0; font-family: var(--sans); }
+  .urow { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+  .urow small { display: block; color: var(--ink-soft); font-size: 12px; }
 
-// ---------- SHARED DOCUMENT + TRACKED CHANGES ----------
-function diff(a,b){const x=a.split(/(\s+)/).filter(Boolean),y=b.split(/(\s+)/).filter(Boolean),n=x.length,m=y.length,L=Array.from({length:n+1},()=>new Uint16Array(m+1));
- for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)L[i][j]=x[i]===y[j]?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
- const o=[];let i=0,j=0;while(i<n&&j<m){if(x[i]===y[j]){o.push({t:'=',s:x[i]});i++;j++}else if(L[i+1][j]>=L[i][j+1])o.push({t:'-',s:x[i++]});else o.push({t:'+',s:y[j++]})}
- while(i<n)o.push({t:'-',s:x[i++]});while(j<m)o.push({t:'+',s:y[j++]});return o}
-function segs(a,b){const s=[];for(const t of diff(a,b)){if(t.t==='='){s.push({eq:t.s});continue}let l=s[s.length-1];if(!l||!l.hunk){l={hunk:1,del:'',ins:''};s.push(l)}l[t.t==='-'?'del':'ins']+=t.s}return s}
-const build=(sg,pick)=>sg.map((g,i)=>g.hunk?g[pick(i)]:g.eq).join('');
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--paper-raised); border-radius: 10px; padding: 24px; max-width: 440px; width: 100%; max-height: 86vh; overflow-y: auto; }
+  .modal h4 { font-family: var(--serif); margin: 0 0 10px; font-size: 18px; }
+  .modal p { font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; margin: 0 0 6px; }
+  .modal textarea { width: 100%; font-family: var(--sans); font-size: 13px; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); margin: 8px 0; }
+  .modal input[type="file"] { font-size: 12px; margin-top: 4px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 8px; font-size: 13px; z-index: 99; max-width: 90%; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+</style>
+</head>
+<body>
 
-function renderEd(){const d=S.d,e=$('#ed');if(!e)return;
- if(!S.isAdmin){let ta=$('#ta');
-  if(!ta){e.innerHTML='<p class="sm">Edit freely — your coordinator sees every change highlighted automatically.</p><textarea id="ta"></textarea><div class="sm" id="st"></div>';ta=$('#ta');
-   ta.oninput=()=>{$('#st').textContent='Saving…';clearTimeout(S.t);S.t=setTimeout(async()=>{try{await updateDoc(mainRef(),{content:ta.value,by:'client',at:Date.now()});$('#st').textContent='Saved ✓'}catch(x){$('#st').textContent='Save failed: '+x.message}},1000)}}
-  ta.disabled=!!d.locked;if(d.by==='admin'||document.activeElement!==ta)if(ta.value!==d.content)ta.value=d.content;
-  if(d.locked)$('#st').textContent='🔒 Locked by your coordinator — editing is paused.';return}
- if(S.editing)return;
- const sg=segs(d.baseline,d.content),n=sg.filter(g=>g.hunk).length,h=d.history||[];
- e.innerHTML=`${n?`<span class="badge">${n} pending change${n>1?'s':''} · last edit by ${d.by||'—'}, ${new Date(d.at).toLocaleString()}</span>`:'<span class="sm">No pending changes. </span>'}
- <div class="bar"><button class="ok" data-act="accAll" ${n?'':'disabled'}>Accept all</button><button class="no" data-act="rejAll" ${n?'':'disabled'}>Revert all</button>
- <button data-act="undo" ${h.length?'':'disabled'}>↺ Undo last action</button><button data-act="lock">${d.locked?'🔓 Unlock client':'🔒 Lock client'}</button><button data-act="edit">✎ Edit text</button></div>
- <div class="pv">${sg.map((g,i)=>g.hunk?`<span>${g.del?`<del>${esc(g.del)}</del>`:''}${g.ins?`<ins>${esc(g.ins)}</ins>`:''}<span class="hb"><button class="ok" data-act="acc" data-i="${i}" title="Accept">✓</button><button class="no" data-act="rev" data-i="${i}" title="Revert">↩</button></span></span>`:esc(g.eq)).join('')||'<span class="sm">Empty document.</span>'}</div>`}
+<div class="topbar">
+  <div class="brand"><span class="mark">📜 Casefile</span><span class="tag">Sale Deed Registration</span></div>
+  <div class="topright">
+    <span class="who" id="who"></span>
+    <button class="act hidden" id="btnAll">← All cases</button>
+    <button class="act hidden" id="btnUndo" disabled>↺ Undo</button>
+    <button class="act hidden" id="btnOut">Sign out</button>
+  </div>
+</div>
 
-async function adm(upd){const d=S.d;await updateDoc(mainRef(),{...upd,history:(d.history||[]).concat([{b:d.baseline,c:d.content}]).slice(-20),by:'admin',at:Date.now()})}
+<div id="auth" class="center">
+  <div class="panel authbox">
+    <div class="tabs"><button id="tabClient" class="active">Client</button><button id="tabAdmin">Admin</button></div>
+    <h3 id="authTitle">Client sign in</h3>
+    <input id="aName" placeholder="Full name" class="hidden" autocomplete="name">
+    <input id="aEmail" type="email" placeholder="Email" autocomplete="email">
+    <input id="aPass" type="password" placeholder="Password (min 8 characters)" autocomplete="current-password">
+    <div class="err" id="aErr"></div>
+    <div class="btnrow"><button class="act primary" id="aGo">Sign in</button></div>
+    <p class="lockrow" id="aSwitchRow"><span id="aSwitchTxt">New here?</span> <button class="linkbtn" id="aSwitch">Create an account</button></p>
+  </div>
+</div>
 
-// ---------- CLICK ROUTER ----------
-const A={
- tab:x=>{S.tab=x.t;S.msg='';authView()},tog:()=>{S.signup=!S.signup;S.msg='';authView()},out:()=>signOut(auth),close:()=>document.querySelector('.modal').remove(),
- go:async()=>{const em=$('#em').value.trim(),pw=$('#pw').value;S.intent=S.tab;S.msg='';
-  try{if(S.signup&&S.tab==='client'){const nm=$('#nm').value.trim();if(!nm)throw Error('Please enter your name');
-   const c=await createUserWithEmailAndPassword(auth,em,pw);await setDoc(doc(db,'users',c.user.uid),{name:nm,email:em,status:'pending',at:Date.now()})}
-   else await signInWithEmailAndPassword(auth,em,pw)}catch(e){S.msg=e.message.replace('Firebase: ','');authView()}},
- appr:async x=>{const p=S.pend.find(q=>q.id===x.id),t=prompt('Case title for this client:',p.name+"'s case");if(!t)return;
-  const b=writeBatch(db);b.update(doc(db,'users',x.id),{status:'approved'});b.set(doc(db,'cases',x.id),{title:t,documents:{},at:Date.now()});
-  b.set(doc(db,'cases',x.id,'docs','main'),{baseline:'',content:'',history:[],locked:false,by:'admin',at:Date.now()});await b.commit()},
- rej:x=>confirm('Decline this request?')&&updateDoc(doc(db,'users',x.id),{status:'rejected'}),
- pick:x=>mountCase(x.id),
- up:x=>{const i=document.createElement('input');i.type='file';i.accept='application/pdf,image/*';i.onchange=()=>i.files[0]&&upload(x.t,i.files[0]);i.click()},
- view:x=>view(x.fid),
- acc:x=>{const sg=segs(S.d.baseline,S.d.content);adm({baseline:build(sg,k=>k==x.i?'ins':'del')})},
- rev:x=>{const sg=segs(S.d.baseline,S.d.content);adm({content:build(sg,k=>k==x.i?'del':'ins')})},
- accAll:()=>adm({baseline:S.d.content}),rejAll:()=>adm({content:S.d.baseline}),
- undo:()=>{const h=[...(S.d.history||[])],l=h.pop();updateDoc(mainRef(),{baseline:l.b,content:l.c,history:h,by:'admin',at:Date.now()})},
- lock:()=>updateDoc(mainRef(),{locked:!S.d.locked}),
- edit:()=>{S.editing=true;$('#ed').innerHTML=`<p class="sm">Saving sets this text as the new approved version.</p><textarea id="ae"></textarea><div class="bar"><button class="ok" data-act="saveEd">Save</button><button data-act="cancelEd">Cancel</button></div>`;$('#ae').value=S.d.content},
- saveEd:async()=>{const v=$('#ae').value;S.editing=false;await adm({baseline:v,content:v})},
- cancelEd:()=>{S.editing=false;renderEd()}
+<div id="pending" class="center hidden">
+  <div class="panel authbox"><h3 id="pendTitle"></h3><p class="explainer" id="pendMsg"></p></div>
+</div>
+
+<div id="adminHome" class="main hidden"></div>
+
+<div class="layout hidden" id="app">
+  <div class="rail">
+    <h2 id="railTitle"></h2>
+    <div class="sub" id="railSub"></div>
+    <div id="flagsWrap"></div>
+    <ul class="steps" id="stepsList"></ul>
+  </div>
+  <div class="main" id="mainPanel"></div>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop"><div class="modal" id="modalBox"></div></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+// ======== 1. PASTE YOUR FIREBASE WEB CONFIG HERE (Project settings → Your apps → Web app) ========
+const FIREBASE_CONFIG = {
+  apiKey:"AIzaSyCXJWjqV2RRpg-O_W6Jo3R1WnfWWnFnznw",authDomain:"automatingregistrations.firebaseapp.com",projectId:"automatingregistrations",appId:"1:526527586653:web:bf06a40393548e7fcc48b4"
 };
-document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b)return;e.preventDefault();A[b.dataset.act]?.(b.dataset)});
-</script></body></html>
+// ===============================================================================================
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth(), db = firebase.firestore();
+const TS = () => firebase.firestore.FieldValue.serverTimestamp();
+
+const STAGE_TEMPLATE = [
+  { id: 'agreement', name: 'Sale Agreement drafted', explainer: 'The Sale Agreement is prepared on 0.5% stamp paper. Please read it carefully — you can request changes to consideration amount, schedule, or party details before we move on.', approval: true, cond: null },
+  { id: 'agreement_stamp', name: 'Stamp duty on agreement paid', explainer: 'Stamp duty (0.5% of consideration) is paid on the e-stamp paper the agreement is printed on. This amount is later adjusted against the Sale Deed\'s stamp duty.', approval: false, cond: null },
+  { id: 'poa', name: 'Power of Attorney adjudicated', explainer: 'Since one party is acting through a POA, it needs to be adjudicated and verified before it can be used at registration.', approval: false, cond: 'hasPOA' },
+  { id: 'deed_draft', name: 'Sale Deed drafted', explainer: 'This is the main legal document that transfers ownership. Please review it fully — once you approve, we move straight to the Kaveri portal.', approval: true, cond: null },
+  { id: 'ekhata', name: 'e-Khata verified', explainer: 'e-Khata confirms the property is recorded in the buyer\'s name for tax purposes after registration. Upload the confirmation once you have it, and we move straight to the next step.', approval: false, cond: null },
+  { id: 'kaveri', name: 'Uploaded to Kaveri portal', explainer: 'Karnataka\'s official government system for property registration. Both your and the other party\'s Aadhaar numbers must be linked to an active mobile number, since OTP verification happens here — this is a common hold-up, so please double check this in advance.', approval: false, cond: null },
+  { id: 'stamp_payment', name: 'Stamp duty & registration fee paid', explainer: 'The government fee (stamp duty + registration fee) calculated by the Kaveri portal is paid online. This is separate from the earlier agreement stamp duty.', approval: false, cond: null },
+  { id: 'slot', name: 'Sub-Registrar slot booked', explainer: 'We book your preferred date and time at the Sub-Registrar\'s office for final registration. Screenshot of the booking and the payment challan are attached here once confirmed.', approval: false, cond: null },
+  { id: 'registration', name: 'Registration day', explainer: 'Both parties attend in person for thumb impression, photo and OTP authentication. We\'ll attach a photo of the completed deed here once it\'s done.', approval: true, cond: null },
+  { id: 'handover', name: 'Loan handover to seller', explainer: 'Since this purchase involves a home loan, the bank collects the registered deed, e-Khata and Encumbrance Certificate before releasing final payment to the seller.', approval: false, cond: 'hasLoan' },
+];
+const CANNED_RESPONSES = [
+  { tag: 'TDS', text: 'For properties above ₹50 lakh, 1% TDS must be deducted by the buyer and deposited via Form 26QB before registration. We\'ll share the challan copy once filed.' },
+  { tag: 'Stamp Duty', text: 'Stamp duty in Karnataka is 5% of the property value or guidance value, whichever is higher, plus 1% registration fee. There\'s no separate concession for first-time buyers currently.' },
+  { tag: 'Aadhaar OTP', text: 'Both parties\' Aadhaar numbers need to be linked to a mobile number that can receive OTPs, since the Kaveri portal authenticates identity this way. Please check this is active before our slot.' },
+  { tag: 'e-Khata', text: 'e-Khata is the digital property record used for tax and ownership verification — registration cannot proceed without it, so we always confirm it early in the process.' },
+];
+const DOCUMENT_TYPES = [
+  { id: 'aadhaar_seller', name: 'Aadhaar — Seller' }, { id: 'aadhaar_buyer', name: 'Aadhaar — Buyer' },
+  { id: 'pan_buyer', name: 'PAN — Buyer' }, { id: 'ekhata', name: 'e-Khata Certificate' },
+  { id: 'tax_receipt', name: 'Property Tax Receipt' }, { id: 'prev_deed', name: 'Previous Sale Deed' },
+];
+const MAX_FILE = 3 * 1024 * 1024, CHUNK = 700000;
+
+// ---------- globals ----------
+let me = null, role = null, caseId = null, intended = null;
+let currentView = 'client', authTab = 'client', signup = false;
+let S = null, U = [], baseUnsubs = [], caseUnsubs = [], undoStack = [], pendingEdit = {}, saveTimers = {}, rafId = 0, lastStage = null;
+const $ = id => document.getElementById(id);
+const val = id => { const e = $(id); return e ? e.value : ''; };
+const C = p => db.doc(`cases/${caseId}/${p}`);
+const CC = p => db.collection(`cases/${caseId}/${p}`);
+function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmt(t) { return t && t.toDate ? t.toDate().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : 'Just now'; }
+function toast(m) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 4000); }
+const fresh = () => ({ flags: {}, stageData: {}, messages: {}, documents: {}, drafts: {}, selected: 'agreement', title: '', address: '', init: false });
+function visibleStages(flags) { return STAGE_TEMPLATE.filter(s => !s.cond || flags[s.cond]); }
+function statusLabel(st) { return st === 'done' ? 'Done' : st === 'waiting_client' ? 'Waiting on you' : st === 'in_progress' ? 'In progress' : 'Pending'; }
+function show(name) { ['auth', 'pending', 'adminHome', 'app'].forEach(n => $(n).classList.toggle('hidden', n !== name)); }
+function schedule() { cancelAnimationFrame(rafId); rafId = requestAnimationFrame(() => { if (caseId) renderAll(); }); }
+
+// ---------- auth ----------
+function setAuthTab(t) {
+  authTab = t; signup = false; $('aErr').textContent = '';
+  $('tabClient').classList.toggle('active', t === 'client'); $('tabAdmin').classList.toggle('active', t === 'admin');
+  renderAuthMode();
+}
+function renderAuthMode() {
+  const adm = authTab === 'admin';
+  $('aName').classList.toggle('hidden', !signup);
+  $('authTitle').textContent = adm ? 'Admin sign in' : signup ? 'Request access' : 'Client sign in';
+  $('aGo').textContent = signup ? 'Create account' : 'Sign in';
+  $('aSwitchRow').classList.toggle('hidden', adm);
+  $('aSwitchTxt').textContent = signup ? 'Already registered?' : 'New here?';
+  $('aSwitch').textContent = signup ? 'Sign in' : 'Create an account';
+}
+$('tabClient').onclick = () => setAuthTab('client');
+$('tabAdmin').onclick = () => setAuthTab('admin');
+$('aSwitch').onclick = () => { signup = !signup; renderAuthMode(); };
+$('aGo').onclick = async () => {
+  const email = val('aEmail').trim(), pw = val('aPass'), name = val('aName').trim();
+  $('aErr').textContent = '';
+  if (!email || pw.length < 8) { $('aErr').textContent = 'Enter an email and a password of at least 8 characters.'; return; }
+  try {
+    intended = authTab;
+    if (authTab === 'client' && signup) {
+      if (!name) { $('aErr').textContent = 'Please enter your name.'; return; }
+      const c = await auth.createUserWithEmailAndPassword(email, pw);
+      await db.doc('users/' + c.user.uid).set({ name, email, status: 'pending', createdAt: TS() });
+    } else await auth.signInWithEmailAndPassword(email, pw);
+  } catch (e) { intended = null; $('aErr').textContent = e.message.replace('Firebase: ', ''); }
+};
+$('btnOut').onclick = () => auth.signOut();
+$('btnAll').onclick = () => { closeCase(); showAdminHome(); };
+
+function cleanup() { baseUnsubs.forEach(f => f()); baseUnsubs = []; closeCase(); undoStack = []; $('btnUndo').disabled = true; }
+function closeCase() { caseUnsubs.forEach(f => f()); caseUnsubs = []; caseId = null; S = null; pendingEdit = {}; }
+
+auth.onAuthStateChanged(async u => {
+  cleanup(); me = u; role = null;
+  ['btnOut', 'btnAll', 'btnUndo'].forEach(i => $(i).classList.add('hidden'));
+  if (!u) { $('who').textContent = ''; show('auth'); return; }
+  $('who').textContent = u.email; $('btnOut').classList.remove('hidden');
+  let isAdm = false;
+  try { isAdm = (await db.doc('admins/' + u.uid).get()).exists; } catch (e) {}
+  if ((intended === 'admin' && !isAdm) || (intended === 'client' && isAdm)) {
+    intended = null; await auth.signOut();
+    $('aErr').textContent = isAdm ? 'This is an admin account — use the Admin tab.' : 'This account does not have admin access.';
+    return;
+  }
+  intended = null; role = isAdm ? 'admin' : 'client'; currentView = isAdm ? 'staff' : 'client';
+  if (isAdm) {
+    baseUnsubs.push(db.collection('users').onSnapshot(s => { U = s.docs.map(d => ({ id: d.id, ...d.data() })); if (!caseId) renderAdminHome(); }, e => toast(e.message)));
+    showAdminHome();
+  } else {
+    baseUnsubs.push(db.doc('users/' + u.uid).onSnapshot(d => {
+      const v = d.data();
+      if (!v) { pend('Setting up your account…', 'One moment.'); return; }
+      if (v.status === 'approved' && v.caseId) { if (caseId !== v.caseId) openCase(v.caseId); }
+      else { closeCase(); v.status === 'rejected' ? pend('Access not granted', 'Your request was declined or your access was revoked. Please contact your coordinator.') : pend('Waiting for approval', 'Thanks ' + (v.name || '') + '! Your coordinator needs to approve your account before you can open the portal. This page updates automatically.'); }
+    }, e => toast(e.message)));
+  }
+});
+function pend(t, m) { $('pendTitle').textContent = t; $('pendMsg').textContent = m; show('pending'); }
+
+// ---------- admin home ----------
+function showAdminHome() { closeCase(); $('btnAll').classList.add('hidden'); $('btnUndo').classList.add('hidden'); show('adminHome'); renderAdminHome(); }
+function renderAdminHome() {
+  if (role !== 'admin') return;
+  const sec = (title, list, btns) => `<div class="panel"><h3>${title} (${list.length})</h3>${list.map(u => `<div class="urow"><div>${escapeHtml(u.name)}<small>${escapeHtml(u.email)}</small></div><div class="btnrow">${btns(u)}</div></div>`).join('') || '<p class="explainer">Nobody here.</p>'}</div>`;
+  $('adminHome').innerHTML = `<div class="case-head"><div><h1>Admin console</h1><div class="addr">Approve new clients and open their cases</div></div></div>`
+    + sec('Pending approval', U.filter(u => u.status === 'pending'), u => `<button class="act approve" data-ap="${u.id}">Approve</button><button class="act request" data-rj="${u.id}">Reject</button>`)
+    + sec('Active clients', U.filter(u => u.status === 'approved'), u => `<button class="act primary" data-op="${u.caseId}">Open case</button><button class="act" data-rv="${u.id}">Revoke</button>`)
+    + sec('Rejected / revoked', U.filter(u => u.status === 'rejected'), u => `<button class="act" data-ap="${u.id}">Re-approve</button>`);
+  $('adminHome').querySelectorAll('[data-ap]').forEach(b => b.onclick = () => approveUser(b.dataset.ap));
+  $('adminHome').querySelectorAll('[data-rj]').forEach(b => b.onclick = () => db.doc('users/' + b.dataset.rj).update({ status: 'rejected' }).catch(e => toast(e.message)));
+  $('adminHome').querySelectorAll('[data-rv]').forEach(b => b.onclick = () => confirmModal('Revoke this client\'s access? They will be locked out immediately.', () => revokeUser(b.dataset.rv)));
+  $('adminHome').querySelectorAll('[data-op]').forEach(b => b.onclick = () => openCase(b.dataset.op));
+}
+async function approveUser(uid) {
+  const u = U.find(x => x.id === uid); if (!u) return;
+  try {
+    const b = db.batch(); let cref;
+    if (u.caseId) { cref = db.doc('cases/' + u.caseId); b.update(cref, { clientUid: uid }); }
+    else {
+      const title = prompt('Case title', u.name + '\'s Property'); if (!title) return;
+      const address = prompt('Property location (e.g. Whitefield, Bengaluru)', '') || '';
+      cref = db.collection('cases').doc();
+      b.set(cref, { title, address, clientUid: uid, flags: { hasPOA: false, hasLoan: false }, createdAt: TS() });
+      STAGE_TEMPLATE.forEach((s, i) => b.set(cref.collection('stages').doc(s.id), { status: i ? 'pending' : 'in_progress', proofNote: '', files: [], approved: false }));
+    }
+    b.update(db.doc('users/' + uid), { status: 'approved', caseId: cref.id });
+    await b.commit();
+  } catch (e) { toast(e.message); }
+}
+async function revokeUser(uid) {
+  const u = U.find(x => x.id === uid); const b = db.batch();
+  b.update(db.doc('users/' + uid), { status: 'rejected' });
+  if (u.caseId) b.update(db.doc('cases/' + u.caseId), { clientUid: '' });
+  try { await b.commit(); } catch (e) { toast(e.message); }
+}
+
+// ---------- case subscriptions ----------
+function openCase(id) {
+  closeCase(); caseId = id; S = fresh();
+  const sub = (q, fn) => caseUnsubs.push(q.onSnapshot(fn, e => toast(e.message)));
+  sub(db.doc('cases/' + id), d => { const v = d.data() || {}; S.flags = v.flags || {}; S.title = v.title || ''; S.address = v.address || ''; schedule(); });
+  sub(CC('stages'), s => {
+    S.stageData = {}; s.forEach(d => S.stageData[d.id] = d.data());
+    if (!S.init && s.size) { S.init = true; const f = visibleStages(S.flags).find(x => (S.stageData[x.id] || {}).status !== 'done'); if (f) S.selected = f.id; }
+    schedule();
+  });
+  sub(CC('messages').orderBy('ts'), s => {
+    S.messages = {}; s.forEach(d => { const v = d.data({ serverTimestamps: 'estimate' }); v.id = d.id; (S.messages[v.stageId] = S.messages[v.stageId] || []).push(v); }); schedule();
+  });
+  sub(CC('documents'), s => { S.documents = {}; s.forEach(d => S.documents[d.id] = d.data({ serverTimestamps: 'estimate' })); schedule(); });
+  sub(CC('drafts'), s => { S.drafts = {}; s.forEach(d => S.drafts[d.id] = d.data()); schedule(); });
+  show('app');
+  $('btnAll').classList.toggle('hidden', role !== 'admin'); $('btnUndo').classList.toggle('hidden', role !== 'admin');
+}
+
+// ---------- undo (admin) ----------
+function pushUndo(fn) { undoStack.push(fn); if (undoStack.length > 30) undoStack.shift(); $('btnUndo').disabled = false; }
+$('btnUndo').onclick = () => {
+  if (!undoStack.length) return;
+  confirmModal('Undo your last action? This reverts the most recent change.', async () => {
+    try { await undoStack.pop()(); } catch (e) { toast(e.message); }
+    $('btnUndo').disabled = !undoStack.length;
+  });
+};
+
+// ---------- file storage (Firestore chunks, free plan) ----------
+function readDataUrl(f) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); }
+async function saveFile(f) {
+  if (f.size > MAX_FILE) throw new Error(f.name + ' is over 3 MB. Please compress it first.');
+  if (!/^(application\/pdf|image\/)/.test(f.type)) throw new Error('Only PDF or image files are allowed.');
+  const url = await readDataUrl(f), n = Math.ceil(url.length / CHUNK), fref = CC('files').doc();
+  const b = db.batch();
+  b.set(fref, { name: f.name, chunks: n, by: me.uid, ts: TS() });
+  for (let i = 0; i < n; i++) b.set(fref.collection('chunks').doc(String(i).padStart(3, '0')), { data: url.slice(i * CHUNK, (i + 1) * CHUNK) });
+  await b.commit();
+  return { name: f.name, fid: fref.id };
+}
+async function loadFile(fid) {
+  const s = await CC(`files/${fid}/chunks`).get(); let out = ''; s.forEach(d => out += d.data().data); return out;
+}
+async function saveFiles(list) { const r = []; for (const f of list) r.push(await saveFile(f)); return r; }
+
+// ---------- diff / track changes ----------
+function diffWords(a, b) {
+  const x = a.split(/(\s+)/).filter(Boolean), y = b.split(/(\s+)/).filter(Boolean), n = x.length, m = y.length, out = [];
+  const push = (t, s) => { const l = out[out.length - 1]; l && l.t === t ? l.s += s : out.push({ t, s }); };
+  if (a === b) return a ? [{ t: 'eq', s: a }] : [];
+  if (n * m > 6e6) { push('del', a); push('ins', b); return out; }
+  const L = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i][j] = x[i] === y[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  let i = 0, j = 0;
+  while (i < n && j < m) { if (x[i] === y[j]) { push('eq', x[i]); i++; j++; } else if (L[i + 1][j] >= L[i][j + 1]) push('del', x[i++]); else push('ins', y[j++]); }
+  while (i < n) push('del', x[i++]); while (j < m) push('ins', y[j++]);
+  return out;
+}
+function rebuild(segs, gi, mode) {
+  let g = -1, prevEq = true, B = '', Cc = '';
+  for (const s of segs) {
+    if (s.t === 'eq') { B += s.s; Cc += s.s; prevEq = true; continue; }
+    if (prevEq) { g++; prevEq = false; }
+    const hit = g === gi;
+    if (s.t === 'del') { if (!(hit && mode === 'accept')) B += s.s; if (hit && mode === 'reject') Cc += s.s; }
+    else { if (!(hit && mode === 'reject')) Cc += s.s; if (hit && mode === 'accept') B += s.s; }
+  }
+  return { baseline: B, current: Cc };
+}
+function renderDiff(segs) {
+  let g = -1, h = '';
+  segs.forEach((s, i) => {
+    const e = escapeHtml(s.s);
+    if (s.t === 'eq') { h += e; return; }
+    if (i === 0 || segs[i - 1].t === 'eq') g++;
+    h += s.t === 'ins' ? `<ins>${e}</ins>` : `<del>${e}</del>`;
+    if (i === segs.length - 1 || segs[i + 1].t === 'eq') h += `<span class="gb"><button data-d="acc" data-g="${g}" title="Accept this change">✓</button><button data-d="rej" data-g="${g}" title="Reject this change">✕</button></span>`;
+  });
+  return h || '<span style="color:var(--ink-soft)">Document is empty.</span>';
+}
+async function draftAct(a, sid, g) {
+  const d = S.drafts[sid], ref = C('drafts/' + sid);
+  const prev = d ? { baseline: d.baseline, current: d.current, locked: !!d.locked } : null;
+  let upd;
+  if (a === 'hist') return showHistory(sid);
+  if (a === 'publish') { const t = val('baseEd').trim(); if (!t) return; upd = { baseline: t, current: t, locked: false }; }
+  else if (!d) return;
+  else if (a === 'lock') upd = { locked: !d.locked };
+  else if (a === 'acceptAll') upd = { baseline: d.current };
+  else if (a === 'rejectAll') upd = { current: d.baseline };
+  else if (a === 'acc' || a === 'rej') upd = rebuild(diffWords(d.baseline, d.current), +g, a === 'acc' ? 'accept' : 'reject');
+  else return;
+  upd.updatedBy = me.uid; upd.updatedAt = TS();
+  try {
+    if (prev) await CC(`drafts/${sid}/revisions`).add({ text: prev.current, by: me.uid, role: 'admin', ts: TS() });
+    await ref.set(upd, { merge: true });
+    pushUndo(() => prev ? ref.set({ ...prev, updatedBy: me.uid, updatedAt: TS() }, { merge: true }) : ref.delete());
+  } catch (e) { toast(e.message); }
+}
+async function showHistory(sid) {
+  try {
+    const s = await CC(`drafts/${sid}/revisions`).orderBy('ts', 'desc').limit(12).get();
+    const rows = s.docs.map(d => { const v = d.data({ serverTimestamps: 'estimate' }); return `<div class="hist-row"><div>${v.role === 'admin' ? 'Coordinator' : 'Client'} · ${fmt(v.ts)}<small>${escapeHtml(v.text.slice(0, 90))}…</small></div><button class="act" data-rs="${d.id}">Restore</button></div>`; }).join('') || '<p>No history yet.</p>';
+    openModal(`<h4>Version history</h4>${rows}<div class="btnrow" style="margin-top:14px;"><button class="act" id="hClose">Close</button></div>`);
+    $('hClose').onclick = closeModal;
+    document.querySelectorAll('[data-rs]').forEach(b => b.onclick = async () => {
+      const text = s.docs.find(d => d.id === b.dataset.rs).data().text, d = S.drafts[sid];
+      closeModal();
+      try {
+        await CC(`drafts/${sid}/revisions`).add({ text: d.current, by: me.uid, role: 'admin', ts: TS() });
+        const prev = d.current;
+        await C('drafts/' + sid).update({ current: text, updatedBy: me.uid, updatedAt: TS() });
+        pushUndo(() => C('drafts/' + sid).update({ current: prev, updatedBy: me.uid, updatedAt: TS() }));
+      } catch (e) { toast(e.message); }
+    });
+  } catch (e) { toast(e.message); }
+}
+function queueSave(sid, text) {
+  pendingEdit[sid] = text; clearTimeout(saveTimers[sid]);
+  saveTimers[sid] = setTimeout(async () => {
+    try {
+      await C('drafts/' + sid).update({ current: text, updatedBy: me.uid, updatedAt: TS() });
+      await CC(`drafts/${sid}/revisions`).add({ text, by: me.uid, role: 'client', ts: TS() });
+      if (pendingEdit[sid] === text) delete pendingEdit[sid];
+    } catch (e) { toast(e.message); }
+  }, 1200);
+}
+function draftPanel(stage, isStaff) {
+  if (!stage.approval) return '';
+  const d = S.drafts[stage.id]; let h = '<div class="panel"><h3>Live document · track changes</h3>';
+  if (isStaff) {
+    h += `<p class="explainer">Paste the document text and publish it. The client can edit it here; every change is highlighted below and you can accept or reject each one.</p>`;
+    if (d) {
+      const changed = d.current !== d.baseline;
+      h += `<div class="statusbar"><span class="statuschip ${d.locked ? 'pending' : 'done'}">${d.locked ? 'Editing locked' : 'Client can edit'}</span>${changed ? '<span class="statuschip waiting_client">✎ Unreviewed changes</span>' : ''}</div>
+        <div class="diff">${renderDiff(diffWords(d.baseline, d.current))}</div>
+        <div class="btnrow" style="margin-bottom:16px;"><button class="act" data-d="lock">${d.locked ? '🔓 Unlock editing' : '🔒 Lock editing'}</button><button class="act approve" data-d="acceptAll" ${changed ? '' : 'disabled'}>Accept all</button><button class="act request" data-d="rejectAll" ${changed ? '' : 'disabled'}>Reject all</button><button class="act" data-d="hist">History</button></div>`;
+    }
+    h += `<textarea class="ed" id="baseEd" style="min-height:120px;" placeholder="Paste or type the document text to share…">${escapeHtml(d ? d.baseline : '')}</textarea>
+      <div class="btnrow"><button class="act primary" data-d="publish">${d ? 'Publish as new baseline' : 'Publish for client'}</button></div>`;
+  } else if (!d) h += `<p class="explainer">Your coordinator hasn't shared a live document for this stage yet.</p>`;
+  else {
+    h += `<p class="explainer">${d.locked ? 'Editing is locked by your coordinator right now.' : 'Edit the text directly — changes save automatically and your coordinator sees them highlighted.'}</p>
+      <textarea class="ed" id="draftEd" ${d.locked ? 'disabled' : ''}>${escapeHtml(pendingEdit[stage.id] != null ? pendingEdit[stage.id] : d.current)}</textarea>
+      <div class="btnrow"><button class="act" data-d="reset" ${d.locked || d.current === d.baseline ? 'disabled' : ''}>Undo my edits</button></div>`;
+  }
+  return h + '</div>';
+}
+
+// ---------- rendering ----------
+function renderFlags() {
+  const isStaff = currentView === 'staff';
+  const defs = [{ key: 'hasPOA', label: 'Has POA' }, { key: 'hasLoan', label: 'Has Loan' }];
+  $('flagsWrap').innerHTML = `<div class="flags">${defs.map(d => `<span class="flag ${S.flags[d.key] ? 'on' : ''} ${isStaff ? '' : 'locked'}" data-key="${d.key}">${d.label}${S.flags[d.key] ? ' ✓' : ''}</span>`).join('')}</div>`;
+  if (isStaff) $('flagsWrap').querySelectorAll('.flag').forEach(el => el.onclick = async () => {
+    const k = el.dataset.key, was = !!S.flags[k];
+    try { await db.doc('cases/' + caseId).update({ ['flags.' + k]: !was }); pushUndo(() => db.doc('cases/' + caseId).update({ ['flags.' + k]: was })); } catch (e) { toast(e.message); }
+  });
+}
+function renderSteps() {
+  const stages = visibleStages(S.flags), isStaff = currentView === 'staff';
+  $('stepsList').innerHTML = stages.map(s => {
+    const d = S.stageData[s.id] || { status: 'pending' }, dr = S.drafts[s.id];
+    const dot = d.status === 'done' ? 'done' : d.status === 'waiting_client' ? 'waiting' : d.status === 'in_progress' ? 'progress' : '';
+    const edited = isStaff && dr && dr.current !== dr.baseline ? ' · <span class="edited">✎ client edits</span>' : '';
+    return `<li class="step ${S.selected === s.id ? 'selected' : ''}" data-id="${s.id}"><div class="dot ${dot}">${d.status === 'done' ? '✓' : ''}</div><div><div class="label">${s.name}</div><div class="status-line">${statusLabel(d.status)}${edited}</div></div></li>`;
+  }).join('');
+  $('stepsList').querySelectorAll('.step').forEach(el => el.onclick = () => { S.selected = el.dataset.id; renderAll(); });
+}
+function renderMain() {
+  const stage = STAGE_TEMPLATE.find(s => s.id === S.selected);
+  const data = S.stageData[stage.id] || { status: 'pending', proofNote: '', files: [] };
+  const isStaff = currentView === 'staff';
+  // keep whatever the user is typing
+  const keep = {}, act = document.activeElement && document.activeElement.id, same = lastStage === stage.id;
+  ['msgBox', 'baseEd'].forEach(i => { if ($(i) && same) keep[i] = $(i).value; });
+  const selStart = act && $(act) && $(act).selectionStart;
+
+  let actionsHtml = '';
+  if (isStaff) {
+    const btns = [`<button class="act" data-a="mark_progress" ${data.status !== 'pending' ? 'disabled' : ''}>Mark in progress</button>`];
+    if (stage.approval) btns.push(`<button class="act primary" data-a="send_draft" ${data.status === 'pending' || data.status === 'done' ? 'disabled' : ''}>${data.status === 'waiting_client' ? 'Revise & resend draft' : 'Send draft for review'}</button>`);
+    else btns.push(`<button class="act" data-a="mark_done" ${data.status === 'done' ? 'disabled' : ''}>Mark done + attach proof</button>`);
+    actionsHtml = `<div class="btnrow">${btns.join('')}</div>`;
+  } else if (data.status === 'waiting_client' && stage.approval) actionsHtml = `<div class="btnrow"><button class="act approve" data-a="approve">Approve, looks good</button><button class="act request" data-a="request_changes">Request changes</button></div>`;
+  else if (data.status === 'done') actionsHtml = `<div class="btnrow"><button class="act" disabled>Completed</button></div>`;
+  else if (data.status === 'in_progress') actionsHtml = `<div class="btnrow"><button class="act" disabled>Your coordinator is working on this</button></div>`;
+  else actionsHtml = `<div class="btnrow"><button class="act" disabled>Nothing needed from you right now</button></div>`;
+
+  const files = data.files || [];
+  const proofLabel = data.status === 'waiting_client' && stage.approval ? 'Draft attached for your review' : 'Proof attached by coordinator';
+  const proofHtml = data.proofNote || files.length ? `<div class="proofbox"><strong>${proofLabel}</strong>${escapeHtml(data.proofNote || '')}${files.length ? `<div class="proof-files">${files.map(f => `<a data-fid="${f.fid}" data-name="${escapeHtml(f.name)}">📎 ${escapeHtml(f.name)}</a>`).join('')}</div>` : ''}</div>` : '';
+
+  const msgs = S.messages[stage.id] || [];
+  const threadHtml = msgs.map(m => `<div class="msg ${m.from}">${escapeHtml(m.text)}<span class="meta">${m.from === 'staff' ? 'Coordinator' : 'Client'} · ${fmt(m.ts)}</span></div>`).join('') || `<div style="font-size:13px;color:var(--ink-soft);">No messages yet on this stage.</div>`;
+  const cannedHtml = isStaff ? `<div class="canned">${CANNED_RESPONSES.map((c, i) => `<span data-i="${i}">+ ${c.tag}</span>`).join('')}</div>` : '';
+
+  const docsHtml = `<div class="docs">${DOCUMENT_TYPES.map(dt => {
+    const doc = S.documents[dt.id] || {}, up = doc.uploaded;
+    let btns;
+    if (isStaff) btns = `<button ${up ? '' : 'disabled'} data-view="${dt.id}">${up ? 'View (no download)' : 'Not available'}</button>`;
+    else if (up) btns = `<button data-view="${dt.id}">View</button> <button data-upload="${dt.id}">Replace</button>`;
+    else btns = `<button data-upload="${dt.id}">Upload</button>`;
+    return `<div class="doc"><div class="name">${dt.name}${up ? ' ✓' : ''}</div><div class="meta">${up ? 'Uploaded ' + fmt(doc.uploadedAt) : 'Not uploaded yet'}</div>${btns}</div>`;
+  }).join('')}</div><div class="lockrow">${isStaff ? 'Staff access is view-only in this portal. Files are visible only to the assigned client and admins.' : 'Only you and your assigned coordinator can see these files.'}</div>`;
+
+  const stages = visibleStages(S.flags), done = stages.filter(s => (S.stageData[s.id] || {}).status === 'done').length;
+  $('railTitle').textContent = S.title; $('railSub').textContent = S.address;
+  $('mainPanel').innerHTML = `
+    <div class="case-head"><div><h1>${escapeHtml(S.title)}</h1><div class="addr">${escapeHtml(S.address)} · Sale Deed Registration</div></div><div class="progress-pill">${done} of ${stages.length} stages complete</div></div>
+    <div class="panel"><div class="statusbar"><h3 style="margin:0;">${stage.name}</h3><span class="statuschip ${data.status}">${statusLabel(data.status)}</span></div><p class="explainer">${stage.explainer}</p>${actionsHtml}${proofHtml}</div>
+    ${draftPanel(stage, isStaff)}
+    <div class="panel"><h3>Documents</h3>${docsHtml}</div>
+    <div class="panel"><h3>Questions on this stage</h3><div class="thread" id="thread">${threadHtml}</div>${cannedHtml}
+      <div class="composer"><textarea id="msgBox" placeholder="${isStaff ? 'Reply to the client, or click a canned response above to insert it…' : 'Ask a question about this stage…'}"></textarea><button class="act primary" id="sendMsg">Send</button></div></div>`;
+
+  Object.keys(keep).forEach(i => { if ($(i)) $(i).value = keep[i]; });
+  if (act && $(act)) { $(act).focus(); try { $(act).setSelectionRange(selStart, selStart); } catch (e) {} }
+  lastStage = stage.id;
+
+  const main = $('mainPanel');
+  main.querySelectorAll('[data-a]').forEach(b => b.onclick = () => (isStaff ? handleStaffAction : handleClientAction)(b.dataset.a, stage.id));
+  main.querySelectorAll('[data-d]').forEach(b => b.onclick = () => b.dataset.d === 'reset' ? resetMine(stage.id) : draftAct(b.dataset.d, stage.id, b.dataset.g));
+  main.querySelectorAll('[data-fid]').forEach(a => a.onclick = async () => { const url = await loadFile(a.dataset.fid).catch(e => toast(e.message)); if (!url) return; const l = document.createElement('a'); l.href = url; l.download = a.dataset.name; l.click(); });
+  main.querySelectorAll('[data-view]').forEach(b => b.onclick = () => openDocModal(b.dataset.view));
+  main.querySelectorAll('[data-upload]').forEach(b => b.onclick = () => triggerDocUpload(b.dataset.upload));
+  main.querySelectorAll('.canned span').forEach(el => el.onclick = () => { const box = $('msgBox'); box.value = (box.value ? box.value + '\n' : '') + CANNED_RESPONSES[el.dataset.i].text; box.focus(); });
+  if ($('draftEd')) $('draftEd').oninput = e => queueSave(stage.id, e.target.value);
+  $('sendMsg').onclick = () => sendMessage(stage.id);
+  const th = $('thread'); th.scrollTop = th.scrollHeight;
+}
+function renderAll() { if (!S) return; if (!visibleStages(S.flags).find(s => s.id === S.selected)) S.selected = visibleStages(S.flags)[0].id; renderFlags(); renderSteps(); renderMain(); }
+async function resetMine(sid) {
+  const d = S.drafts[sid]; delete pendingEdit[sid]; clearTimeout(saveTimers[sid]);
+  try { await C('drafts/' + sid).update({ current: d.baseline, updatedBy: me.uid, updatedAt: TS() }); await CC(`drafts/${sid}/revisions`).add({ text: d.baseline, by: me.uid, role: 'client', ts: TS() }); } catch (e) { toast(e.message); }
+}
+
+// ---------- modals ----------
+function openModal(html) { $('modalBox').innerHTML = html; $('modalBackdrop').classList.add('open'); }
+function closeModal() { $('modalBackdrop').classList.remove('open'); }
+function confirmModal(message, onYes) {
+  openModal(`<h4>Please confirm</h4><p>${escapeHtml(message)}</p><div class="btnrow" style="margin-top:14px;"><button class="act" id="cmCancel">Cancel</button><button class="act primary" id="cmYes">Confirm</button></div>`);
+  $('cmCancel').onclick = closeModal; $('cmYes').onclick = () => { closeModal(); onYes(); };
+}
+async function openDocModal(docId) {
+  const dt = DOCUMENT_TYPES.find(d => d.id === docId), doc = S.documents[docId];
+  if (!doc || !doc.uploaded) return;
+  openModal(`<h4>${escapeHtml(dt.name)}</h4><p>Loading…</p>`);
+  let url = ''; try { url = await loadFile(doc.fid); } catch (e) { toast(e.message); closeModal(); return; }
+  const preview = url.startsWith('data:image') ? `<img src="${url}" style="max-width:100%;border-radius:8px;border:1px solid var(--line);margin:10px 0;" />`
+    : url.startsWith('data:application/pdf') ? `<embed src="${url}" type="application/pdf" style="width:100%;height:340px;border-radius:8px;border:1px solid var(--line);margin:10px 0;" />` : '';
+  openModal(`<h4>${escapeHtml(dt.name)}</h4><p>${escapeHtml(doc.fileName)} · Uploaded ${fmt(doc.uploadedAt)}</p>${preview}<div class="btnrow" style="margin-top:14px;"><button class="act" id="dmClose">Close</button></div>`);
+  $('dmClose').onclick = closeModal;
+}
+function triggerDocUpload(docId) {
+  const pick = () => {
+    const input = document.createElement('input'); input.type = 'file'; input.accept = 'application/pdf,image/*';
+    input.onchange = async () => {
+      if (!input.files.length) return;
+      try {
+        toast('Uploading…'); const f = await saveFile(input.files[0]);
+        await C('documents/' + docId).set({ uploaded: true, fileName: f.name, fid: f.fid, uploadedAt: TS() });
+      } catch (e) { toast(e.message); }
+    };
+    input.click();
+  };
+  (S.documents[docId] || {}).uploaded ? confirmModal('Replace the current file with a new upload?', pick) : pick();
+}
+function fileModal(stageId, title, intro, cta, nextStatus, needFile) {
+  openModal(`<h4>${title}</h4><p>${intro}</p><textarea id="mNote" style="min-height:60px;" placeholder="Short note for the client…"></textarea><input type="file" id="mFiles" accept="application/pdf,image/*" multiple /><div class="btnrow" style="margin-top:16px;"><button class="act" id="mCancel">Cancel</button><button class="act primary" id="mGo">${cta}</button></div>`);
+  $('mCancel').onclick = closeModal;
+  $('mGo').onclick = async () => {
+    const fl = $('mFiles').files; if (needFile && !fl.length) { toast('Please attach at least one file.'); return; }
+    const note = $('mNote').value.trim(), d = S.stageData[stageId], prev = { status: d.status, proofNote: d.proofNote || '', files: d.files || [] };
+    $('mGo').disabled = true;
+    try {
+      const nf = await saveFiles(Array.from(fl));
+      await C('stages/' + stageId).update({ status: nextStatus, proofNote: note || (nextStatus === 'done' ? 'Marked done.' : 'Draft attached for your review.'), files: prev.files.concat(nf) });
+      pushUndo(() => C('stages/' + stageId).update(prev));
+      closeModal();
+      if (nextStatus === 'done') { const st = visibleStages(S.flags), i = st.findIndex(s => s.id === stageId); if (i < st.length - 1) S.selected = st[i + 1].id; }
+    } catch (e) { toast(e.message); $('mGo').disabled = false; }
+  };
+}
+
+// ---------- actions ----------
+function handleStaffAction(a, sid) {
+  const stage = STAGE_TEMPLATE.find(s => s.id === sid);
+  if (a === 'mark_done') fileModal(sid, `Mark "${escapeHtml(stage.name)}" as done`, 'Add a note and attach PDF/image proof (max 3 MB each). The client sees it too.', 'Mark done', 'done', false);
+  if (a === 'send_draft') fileModal(sid, 'Send draft for review', 'Attach the draft file. The client will see Approve / Request Changes.', 'Send to client', 'waiting_client', true);
+  if (a === 'mark_progress') confirmModal('Mark this stage as in progress?', async () => {
+    const prev = { status: S.stageData[sid].status };
+    try { await C('stages/' + sid).update({ status: 'in_progress' }); pushUndo(() => C('stages/' + sid).update(prev)); } catch (e) { toast(e.message); }
+  });
+}
+function handleClientAction(a, sid) {
+  if (a === 'approve') confirmModal('Approve this stage? Your coordinator will be notified to proceed.', async () => {
+    try {
+      const d = S.stageData[sid];
+      await C('stages/' + sid).update({ status: 'done', approved: true, proofNote: d.proofNote || 'Client approved this stage.' });
+      await addMessage(sid, 'Approved — looks good, please proceed to the next step.');
+      const st = visibleStages(S.flags), i = st.findIndex(s => s.id === sid); if (i < st.length - 1) S.selected = st[i + 1].id;
+    } catch (e) { toast(e.message); }
+  });
+  if (a === 'request_changes') {
+    openModal(`<h4>Request changes</h4><p>Tell your coordinator what needs to change.</p><textarea id="rcText" style="min-height:80px;" placeholder="e.g. Please correct the survey number in the schedule."></textarea><div class="btnrow" style="margin-top:12px;"><button class="act" id="rcCancel">Cancel</button><button class="act request" id="rcSubmit">Send request</button></div>`);
+    $('rcCancel').onclick = closeModal;
+    $('rcSubmit').onclick = async () => {
+      const t = val('rcText').trim(); if (!t) return;
+      try { await C('stages/' + sid).update({ status: 'in_progress' }); await addMessage(sid, 'Requesting changes: ' + t); closeModal(); } catch (e) { toast(e.message); }
+    };
+  }
+}
+function addMessage(sid, text) {
+  return CC('messages').add({ uid: me.uid, from: role === 'admin' ? 'staff' : 'client', text, stageId: sid, ts: TS() });
+}
+async function sendMessage(sid) {
+  const text = val('msgBox').trim(); if (!text) return;
+  try {
+    const ref = await addMessage(sid, text); $('msgBox').value = '';
+    if (role === 'admin') pushUndo(() => ref.delete());
+  } catch (e) { toast(e.message); }
+}
+</script>
+</body>
+</html>
