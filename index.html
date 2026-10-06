@@ -3,61 +3,95 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Casefile — Registration Tracker</title>
+<title>Casefile — Registration Portal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper: #F7F5EF; --paper-raised: #FFFFFF; --ink: #202A36; --ink-soft: #5B6472; --line: #DFD9CB;
-    --seal: #96602F; --seal-soft: #F1E4D4; --amber: #B4842E; --amber-soft: #F6ECD9;
-    --green: #3F6B4A; --green-soft: #E4EEE5; --focus: #3B5B82; --focus-soft: #E4EAF1; --danger: #A23B33; --danger-soft: #F5E1DF;
-    --serif: 'Source Serif 4', Georgia, serif; --sans: 'Inter', -apple-system, sans-serif;
-    box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+    --paper: #F7F5EF;
+    --paper-raised: #FFFFFF;
+    --ink: #202A36;
+    --ink-soft: #5B6472;
+    --line: #DFD9CB;
+    --seal: #96602F;
+    --seal-soft: #F1E4D4;
+    --amber: #B4842E;
+    --amber-soft: #F6ECD9;
+    --green: #3F6B4A;
+    --green-soft: #E4EEE5;
+    --focus: #3B5B82;
+    --focus-soft: #E4EAF1;
+    --danger: #A23B33;
+    --serif: 'Source Serif 4', Georgia, serif;
+    --sans: 'Inter', -apple-system, sans-serif;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   *, *::before, *::after { box-sizing: inherit; }
   html { scroll-padding-top: env(safe-area-inset-top, 0px); }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --paper: #1B1E22; --paper-raised: #23262B; --ink: #ECE7DC; --ink-soft: #A7A296;
-      --line: #383B40; --seal-soft: #33291F; --amber-soft: #332C1C; --green-soft: #1E2A21; --focus-soft: #202B38; --danger-soft: #3A2220;
+      --line: #383B40; --seal-soft: #33291F; --amber-soft: #332C1C; --green-soft: #1E2A21; --focus-soft: #202B38;
     }
   }
   :root[data-theme="dark"] {
     --paper: #1B1E22; --paper-raised: #23262B; --ink: #ECE7DC; --ink-soft: #A7A296;
-    --line: #383B40; --seal-soft: #33291F; --amber-soft: #332C1C; --green-soft: #1E2A21; --focus-soft: #202B38; --danger-soft: #3A2220;
+    --line: #383B40; --seal-soft: #33291F; --amber-soft: #332C1C; --green-soft: #1E2A21; --focus-soft: #202B38;
   }
   body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); min-height: 100%; }
   html, body { height: 100%; }
-  .hidden { display: none !important; }
 
-  .topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--paper); border-bottom: 1px solid var(--line); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .topbar {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+    background: var(--paper); border-bottom: 1px solid var(--line);
+    padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    flex-wrap: wrap;
+  }
   .brand { display: flex; align-items: baseline; gap: 8px; }
   .brand .mark { font-family: var(--serif); font-weight: 600; font-size: 20px; }
   .brand .tag { font-size: 12px; color: var(--ink-soft); }
   .topright { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .who { font-size: 12px; color: var(--ink-soft); }
+  .viewswitch { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .viewswitch button {
+    border: none; background: var(--paper-raised); color: var(--ink-soft); font-family: var(--sans);
+    font-size: 13px; font-weight: 600; padding: 8px 14px; cursor: pointer;
+  }
+  .viewswitch button.active { background: var(--ink); color: var(--paper); }
+  .demo-note { font-size: 11px; color: var(--ink-soft); max-width: 240px; line-height: 1.4; }
 
   .layout { display: grid; grid-template-columns: 300px 1fr; gap: 0; min-height: calc(100% - 60px); }
   @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
   .rail { border-right: 1px solid var(--line); padding: 20px 16px; background: var(--paper); }
   .rail h2 { font-family: var(--serif); font-size: 16px; margin: 0 0 4px; }
   .rail .sub { font-size: 12px; color: var(--ink-soft); margin-bottom: 18px; }
+
   .flags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
-  .flag { font-size: 11px; font-weight: 600; padding: 5px 9px; border-radius: 20px; border: 1px solid var(--line); color: var(--ink-soft); cursor: pointer; user-select: none; background: var(--paper-raised); }
+  .flag {
+    font-size: 11px; font-weight: 600; padding: 5px 9px; border-radius: 20px;
+    border: 1px solid var(--line); color: var(--ink-soft); cursor: pointer; user-select: none;
+    background: var(--paper-raised);
+  }
   .flag.on { background: var(--seal-soft); border-color: var(--seal); color: var(--seal); }
   .flag.locked { cursor: default; opacity: .55; }
+
   .steps { list-style: none; margin: 0; padding: 0; position: relative; }
   .step { display: flex; gap: 10px; padding: 10px 8px; border-radius: 8px; cursor: pointer; position: relative; align-items: flex-start; }
   .step:hover { background: var(--paper-raised); }
   .step.selected { background: var(--paper-raised); box-shadow: inset 3px 0 0 var(--seal); }
-  .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); flex: none; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-top: 2px; background: var(--paper-raised); }
+  .dot {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); flex: none;
+    display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+    margin-top: 2px; background: var(--paper-raised);
+  }
   .dot.done { background: var(--green); border-color: var(--green); color: #fff; }
   .dot.waiting { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
   .dot.progress { background: var(--focus-soft); border-color: var(--focus); color: var(--focus); }
   .step .label { font-size: 13.5px; font-weight: 500; line-height: 1.35; }
   .step .status-line { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
-  .step .edited { color: var(--seal); font-weight: 700; }
 
   .main { padding: 28px 32px; overflow-x: auto; }
   @media (max-width: 860px) { .main { padding: 20px 16px; } }
@@ -78,7 +112,10 @@
   .statuschip.done { background: var(--green-soft); color: var(--green); }
 
   .btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
-  button.act { font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 9px 15px; border-radius: 7px; border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink); cursor: pointer; }
+  button.act {
+    font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 9px 15px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink); cursor: pointer;
+  }
   button.act.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
   button.act.approve { background: var(--green); color: #fff; border-color: var(--green); }
   button.act.request { background: var(--danger); color: #fff; border-color: var(--danger); }
@@ -87,13 +124,16 @@
   .proofbox { margin-top: 14px; padding: 12px 14px; background: var(--green-soft); border-radius: 8px; font-size: 13px; color: var(--green); }
   .proofbox strong { display: block; margin-bottom: 3px; font-size: 12.5px; }
   .proof-files { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
-  .proof-files a { font-size: 11px; padding: 5px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink); text-decoration: none; cursor: pointer; }
+  .proof-files a {
+    font-size: 11px; padding: 5px 9px; border-radius: 6px; border: 1px solid var(--line);
+    background: var(--paper-raised); color: var(--ink); text-decoration: none;
+  }
 
   .docs { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
   .doc { border: 1px solid var(--line); border-radius: 8px; padding: 12px; font-size: 13px; }
   .doc .name { font-weight: 600; margin-bottom: 3px; }
   .doc .meta { font-size: 11px; color: var(--ink-soft); margin-bottom: 8px; }
-  .doc button { font-size: 11px; padding: 5px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); cursor: pointer; margin-right: 6px; }
+  .doc button { font-size: 11px; padding: 5px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); cursor: pointer; margin-right: 6px; }
   .doc button:disabled { opacity: .5; cursor: default; }
   .lockrow { font-size: 11px; color: var(--ink-soft); margin-top: 10px; }
 
@@ -102,34 +142,13 @@
   .msg.staff { align-self: flex-start; background: var(--paper); border: 1px solid var(--line); }
   .msg.client { align-self: flex-end; background: var(--seal-soft); }
   .msg .meta { display: block; font-size: 10.5px; color: var(--ink-soft); margin-top: 3px; }
+
   .canned { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
   .canned span { font-size: 11px; padding: 5px 10px; border-radius: 20px; border: 1px dashed var(--line); color: var(--ink-soft); cursor: pointer; user-select: none; }
   .canned span:hover { border-color: var(--seal); color: var(--seal); }
+
   .composer { display: flex; gap: 8px; }
-  .composer textarea, textarea.ed { flex: 1; font-family: var(--sans); font-size: 13.5px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); resize: vertical; min-height: 44px; background: var(--paper); color: var(--ink); width: 100%; }
-  textarea.ed { min-height: 220px; line-height: 1.6; margin-bottom: 10px; }
-  textarea.ed:disabled { opacity: .6; }
-
-  /* Track changes */
-  .diff { white-space: pre-wrap; font-size: 14px; line-height: 1.7; border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: var(--paper); margin-bottom: 12px; max-height: 360px; overflow-y: auto; }
-  .diff ins { background: var(--green-soft); color: var(--green); text-decoration: none; border-bottom: 2px solid var(--green); padding: 0 1px; }
-  .diff del { background: var(--danger-soft); color: var(--danger); text-decoration: line-through; padding: 0 1px; }
-  .gb { display: inline-flex; gap: 3px; margin: 0 4px; vertical-align: middle; }
-  .gb button { font-size: 10px; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line); background: var(--paper-raised); color: var(--ink); cursor: pointer; }
-  .hist-row { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; }
-  .hist-row small { color: var(--ink-soft); display: block; }
-
-  /* Auth + admin home */
-  .center { min-height: calc(100% - 60px); display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .authbox { width: 100%; max-width: 400px; margin: 0; }
-  .tabs { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
-  .tabs button { flex: 1; border: none; background: var(--paper-raised); color: var(--ink-soft); font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 9px; cursor: pointer; }
-  .tabs button.active { background: var(--ink); color: var(--paper); }
-  .authbox input { width: 100%; font-family: var(--sans); font-size: 14px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); margin-bottom: 10px; }
-  .err { color: var(--danger); font-size: 12.5px; min-height: 16px; margin-bottom: 8px; }
-  .linkbtn { background: none; border: none; color: var(--seal); font-size: 12.5px; cursor: pointer; padding: 0; font-family: var(--sans); }
-  .urow { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
-  .urow small { display: block; color: var(--ink-soft); font-size: 12px; }
+  .composer textarea { flex: 1; font-family: var(--sans); font-size: 13.5px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); resize: vertical; min-height: 44px; background: var(--paper); color: var(--ink); }
 
   .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
   .modal-backdrop.open { display: flex; }
@@ -138,535 +157,484 @@
   .modal p { font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; margin: 0 0 6px; }
   .modal textarea { width: 100%; font-family: var(--sans); font-size: 13px; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); margin: 8px 0; }
   .modal input[type="file"] { font-size: 12px; margin-top: 4px; }
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 8px; font-size: 13px; z-index: 99; max-width: 90%; }
+
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+.toast-error { background: var(--danger) !important; }
 </style>
 </head>
 <body>
+<script type="module">
+/*
+ * CASEFILE — Firebase edition
+ *
+ * Replace the values in FIREBASE_CONFIG with the Web app config from:
+ * Firebase Console -> Project settings -> Your apps -> Web app
+ *
+ * This file intentionally uses Firebase's modular browser CDN imports so it
+ * remains a single index.html.
+ */
 
-<div class="topbar">
-  <div class="brand"><span class="mark">📜 Casefile</span><span class="tag">Sale Deed Registration</span></div>
-  <div class="topright">
-    <span class="who" id="who"></span>
-    <button class="act hidden" id="btnAll">← All cases</button>
-    <button class="act hidden" id="btnUndo" disabled>↺ Undo</button>
-    <button class="act hidden" id="btnOut">Sign out</button>
-  </div>
-</div>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+  createUserWithEmailAndPassword, signOut
+} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, updateDoc, addDoc, collection,
+  deleteDoc, query, orderBy, onSnapshot, serverTimestamp,
+  runTransaction, where, getDocs, limit
+} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
-<div id="auth" class="center">
-  <div class="panel authbox">
-    <div class="tabs"><button id="tabClient" class="active">Client</button><button id="tabAdmin">Admin</button></div>
-    <h3 id="authTitle">Client sign in</h3>
-    <input id="aName" placeholder="Full name" class="hidden" autocomplete="name">
-    <input id="aEmail" type="email" placeholder="Email" autocomplete="email">
-    <input id="aPass" type="password" placeholder="Password (min 8 characters)" autocomplete="current-password">
-    <div class="err" id="aErr"></div>
-    <div class="btnrow"><button class="act primary" id="aGo">Sign in</button></div>
-    <p class="lockrow" id="aSwitchRow"><span id="aSwitchTxt">New here?</span> <button class="linkbtn" id="aSwitch">Create an account</button></p>
-  </div>
-</div>
-
-<div id="pending" class="center hidden">
-  <div class="panel authbox"><h3 id="pendTitle"></h3><p class="explainer" id="pendMsg"></p></div>
-</div>
-
-<div id="adminHome" class="main hidden"></div>
-
-<div class="layout hidden" id="app">
-  <div class="rail">
-    <h2 id="railTitle"></h2>
-    <div class="sub" id="railSub"></div>
-    <div id="flagsWrap"></div>
-    <ul class="steps" id="stepsList"></ul>
-  </div>
-  <div class="main" id="mainPanel"></div>
-</div>
-
-<div class="modal-backdrop" id="modalBackdrop"><div class="modal" id="modalBox"></div></div>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script>
-// ======== 1. PASTE YOUR FIREBASE WEB CONFIG HERE (Project settings → Your apps → Web app) ========
 const FIREBASE_CONFIG = {
-  apiKey:"AIzaSyCXJWjqV2RRpg-O_W6Jo3R1WnfWWnFnznw",authDomain:"automatingregistrations.firebaseapp.com",projectId:"automatingregistrations",appId:"1:526527586653:web:bf06a40393548e7fcc48b4"
+  apiKey: "AIzaSyCXJWjqV2RRpg-O_W6Jo3R1WnfWWnFnznw",
+  authDomain: "automatingregistrations.firebaseapp.com",
+  projectId: "automatingregistrations",
+  storageBucket: "automatingregistrations.firebasestorage.app",
+  messagingSenderId: "526527586653",
+  appId: "1:526527586653:web:bf06a40393548e7fcc48b4"
 };
-// ===============================================================================================
 
-firebase.initializeApp(FIREBASE_CONFIG);
-const auth = firebase.auth(), db = firebase.firestore();
-const TS = () => firebase.firestore.FieldValue.serverTimestamp();
+const app = initializeApp(FIREBASE_CONFIG);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 const STAGE_TEMPLATE = [
-  { id: 'agreement', name: 'Sale Agreement drafted', explainer: 'The Sale Agreement is prepared on 0.5% stamp paper. Please read it carefully — you can request changes to consideration amount, schedule, or party details before we move on.', approval: true, cond: null },
-  { id: 'agreement_stamp', name: 'Stamp duty on agreement paid', explainer: 'Stamp duty (0.5% of consideration) is paid on the e-stamp paper the agreement is printed on. This amount is later adjusted against the Sale Deed\'s stamp duty.', approval: false, cond: null },
-  { id: 'poa', name: 'Power of Attorney adjudicated', explainer: 'Since one party is acting through a POA, it needs to be adjudicated and verified before it can be used at registration.', approval: false, cond: 'hasPOA' },
-  { id: 'deed_draft', name: 'Sale Deed drafted', explainer: 'This is the main legal document that transfers ownership. Please review it fully — once you approve, we move straight to the Kaveri portal.', approval: true, cond: null },
-  { id: 'ekhata', name: 'e-Khata verified', explainer: 'e-Khata confirms the property is recorded in the buyer\'s name for tax purposes after registration. Upload the confirmation once you have it, and we move straight to the next step.', approval: false, cond: null },
-  { id: 'kaveri', name: 'Uploaded to Kaveri portal', explainer: 'Karnataka\'s official government system for property registration. Both your and the other party\'s Aadhaar numbers must be linked to an active mobile number, since OTP verification happens here — this is a common hold-up, so please double check this in advance.', approval: false, cond: null },
-  { id: 'stamp_payment', name: 'Stamp duty & registration fee paid', explainer: 'The government fee (stamp duty + registration fee) calculated by the Kaveri portal is paid online. This is separate from the earlier agreement stamp duty.', approval: false, cond: null },
-  { id: 'slot', name: 'Sub-Registrar slot booked', explainer: 'We book your preferred date and time at the Sub-Registrar\'s office for final registration. Screenshot of the booking and the payment challan are attached here once confirmed.', approval: false, cond: null },
-  { id: 'registration', name: 'Registration day', explainer: 'Both parties attend in person for thumb impression, photo and OTP authentication. We\'ll attach a photo of the completed deed here once it\'s done.', approval: true, cond: null },
-  { id: 'handover', name: 'Loan handover to seller', explainer: 'Since this purchase involves a home loan, the bank collects the registered deed, e-Khata and Encumbrance Certificate before releasing final payment to the seller.', approval: false, cond: 'hasLoan' },
+  { id:'agreement', name:'Sale Agreement drafted', explainer:'The Sale Agreement is prepared on 0.5% stamp paper. Please read it carefully — you can request changes to consideration amount, schedule, or party details before we move on.', approval:true, cond:null },
+  { id:'agreement_stamp', name:'Stamp duty on agreement paid', explainer:'Stamp duty (0.5% of consideration) is paid on the e-stamp paper the agreement is printed on. This amount is later adjusted against the Sale Deed\\'s stamp duty.', approval:false, cond:null },
+  { id:'poa', name:'Power of Attorney adjudicated', explainer:'Since one party is acting through a POA, it needs to be adjudicated and verified before it can be used at registration.', approval:false, cond:'hasPOA' },
+  { id:'deed_draft', name:'Sale Deed drafted', explainer:'This is the main legal document that transfers ownership. Please review it fully — once you approve, we move straight to the Kaveri portal.', approval:true, cond:null },
+  { id:'ekhata', name:'e-Khata verified', explainer:'e-Khata confirms the property is recorded in the buyer\\'s name for tax purposes after registration. Upload the confirmation once you have it, and we move straight to the next step.', approval:false, cond:null },
+  { id:'kaveri', name:'Uploaded to Kaveri portal', explainer:'Karnataka\\'s official government system for property registration. Both your and the other party\\'s Aadhaar numbers must be linked to an active mobile number, since OTP verification happens here — this is a common hold-up, so please double check this in advance.', approval:false, cond:null },
+  { id:'stamp_payment', name:'Stamp duty & registration fee paid', explainer:'The government fee (stamp duty + registration fee) calculated by the Kaveri portal is paid online. This is separate from the earlier agreement stamp duty.', approval:false, cond:null },
+  { id:'slot', name:'Sub-Registrar slot booked', explainer:'We book your preferred date and time at the Sub-Registrar\\'s office for final registration. Screenshot of the booking and the payment challan are attached here once confirmed.', approval:false, cond:null },
+  { id:'registration', name:'Registration day', explainer:'Both parties attend in person for thumb impression, photo and OTP authentication. We\\'ll attach a photo of the completed deed here once it\\'s done.', approval:true, cond:null },
+  { id:'handover', name:'Loan handover to seller', explainer:'Since this purchase involves a home loan, the bank collects the registered deed, e-Khata and Encumbrance Certificate before releasing final payment to the seller.', approval:false, cond:'hasLoan' }
 ];
+
 const CANNED_RESPONSES = [
-  { tag: 'TDS', text: 'For properties above ₹50 lakh, 1% TDS must be deducted by the buyer and deposited via Form 26QB before registration. We\'ll share the challan copy once filed.' },
-  { tag: 'Stamp Duty', text: 'Stamp duty in Karnataka is 5% of the property value or guidance value, whichever is higher, plus 1% registration fee. There\'s no separate concession for first-time buyers currently.' },
-  { tag: 'Aadhaar OTP', text: 'Both parties\' Aadhaar numbers need to be linked to a mobile number that can receive OTPs, since the Kaveri portal authenticates identity this way. Please check this is active before our slot.' },
-  { tag: 'e-Khata', text: 'e-Khata is the digital property record used for tax and ownership verification — registration cannot proceed without it, so we always confirm it early in the process.' },
+  {tag:'TDS',text:'For properties above ₹50 lakh, 1% TDS must be deducted by the buyer and deposited via Form 26QB before registration. We\\'ll share the challan copy once filed.'},
+  {tag:'Stamp Duty',text:'Stamp duty in Karnataka is 5% of the property value or guidance value, whichever is higher, plus 1% registration fee. There\\'s no separate concession for first-time buyers currently.'},
+  {tag:'Aadhaar OTP',text:'Both parties\\' Aadhaar numbers need to be linked to a mobile number that can receive OTPs, since the Kaveri portal authenticates identity this way. Please check this is active before our slot.'},
+  {tag:'e-Khata',text:'e-Khata is the digital property record used for tax and ownership verification — registration cannot proceed without it, so we always confirm it early in the process.'}
 ];
+
 const DOCUMENT_TYPES = [
-  { id: 'aadhaar_seller', name: 'Aadhaar — Seller' }, { id: 'aadhaar_buyer', name: 'Aadhaar — Buyer' },
-  { id: 'pan_buyer', name: 'PAN — Buyer' }, { id: 'ekhata', name: 'e-Khata Certificate' },
-  { id: 'tax_receipt', name: 'Property Tax Receipt' }, { id: 'prev_deed', name: 'Previous Sale Deed' },
+  {id:'aadhaar_seller',name:'Aadhaar — Seller'},
+  {id:'aadhaar_buyer',name:'Aadhaar — Buyer'},
+  {id:'pan_buyer',name:'PAN — Buyer'},
+  {id:'ekhata',name:'e-Khata Certificate'},
+  {id:'tax_receipt',name:'Property Tax Receipt'},
+  {id:'prev_deed',name:'Previous Sale Deed'}
 ];
-const MAX_FILE = 3 * 1024 * 1024, CHUNK = 700000;
 
-// ---------- globals ----------
-let me = null, role = null, caseId = null, intended = null;
-let currentView = 'client', authTab = 'client', signup = false;
-let S = null, U = [], baseUnsubs = [], caseUnsubs = [], undoStack = [], pendingEdit = {}, saveTimers = {}, rafId = 0, lastStage = null;
-const $ = id => document.getElementById(id);
-const val = id => { const e = $(id); return e ? e.value : ''; };
-const C = p => db.doc(`cases/${caseId}/${p}`);
-const CC = p => db.collection(`cases/${caseId}/${p}`);
-function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function fmt(t) { return t && t.toDate ? t.toDate().toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : 'Just now'; }
-function toast(m) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 4000); }
-const fresh = () => ({ flags: {}, stageData: {}, messages: {}, documents: {}, drafts: {}, selected: 'agreement', title: '', address: '', init: false });
-function visibleStages(flags) { return STAGE_TEMPLATE.filter(s => !s.cond || flags[s.cond]); }
-function statusLabel(st) { return st === 'done' ? 'Done' : st === 'waiting_client' ? 'Waiting on you' : st === 'in_progress' ? 'In progress' : 'Pending'; }
-function show(name) { ['auth', 'pending', 'adminHome', 'app'].forEach(n => $(n).classList.toggle('hidden', n !== name)); }
-function schedule() { cancelAnimationFrame(rafId); rafId = requestAnimationFrame(() => { if (caseId) renderAll(); }); }
+let userProfile = null;
+let currentCase = null;
+let currentView = "login";
+let selectedStage = "agreement";
+let historyStack = [];
+let unsubscribeCase = null;
+let unsubscribeMessages = null;
 
-// ---------- auth ----------
-function setAuthTab(t) {
-  authTab = t; signup = false; $('aErr').textContent = '';
-  $('tabClient').classList.toggle('active', t === 'client'); $('tabAdmin').classList.toggle('active', t === 'admin');
-  renderAuthMode();
+function esc(s){return (s??'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function escAttr(s){return esc(s).replace(/`/g,'&#96;');}
+function visibleStages(flags){return STAGE_TEMPLATE.filter(s=>!s.cond || flags?.[s.cond]);}
+function statusLabel(st){return st==='done'?'Done':st==='waiting_client'?'Waiting on you':st==='in_progress'?'In progress':'Pending';}
+function tsLabel(ts){
+  if(!ts) return 'Just now';
+  try { return ts.toDate().toLocaleString(); } catch { return 'Just now'; }
 }
-function renderAuthMode() {
-  const adm = authTab === 'admin';
-  $('aName').classList.toggle('hidden', !signup);
-  $('authTitle').textContent = adm ? 'Admin sign in' : signup ? 'Request access' : 'Client sign in';
-  $('aGo').textContent = signup ? 'Create account' : 'Sign in';
-  $('aSwitchRow').classList.toggle('hidden', adm);
-  $('aSwitchTxt').textContent = signup ? 'Already registered?' : 'New here?';
-  $('aSwitch').textContent = signup ? 'Sign in' : 'Create an account';
+function notify(message, error=false){
+  const el=document.getElementById('toast');
+  if(!el)return;
+  el.textContent=message;
+  el.style.display='block';
+  el.dataset.error=error?'1':'0';
+  setTimeout(()=>el.style.display='none',3500);
 }
-$('tabClient').onclick = () => setAuthTab('client');
-$('tabAdmin').onclick = () => setAuthTab('admin');
-$('aSwitch').onclick = () => { signup = !signup; renderAuthMode(); };
-$('aGo').onclick = async () => {
-  const email = val('aEmail').trim(), pw = val('aPass'), name = val('aName').trim();
-  $('aErr').textContent = '';
-  if (!email || pw.length < 8) { $('aErr').textContent = 'Enter an email and a password of at least 8 characters.'; return; }
-  try {
-    intended = authTab;
-    if (authTab === 'client' && signup) {
-      if (!name) { $('aErr').textContent = 'Please enter your name.'; return; }
-      const c = await auth.createUserWithEmailAndPassword(email, pw);
-      await db.doc('users/' + c.user.uid).set({ name, email, status: 'pending', createdAt: TS() });
-    } else await auth.signInWithEmailAndPassword(email, pw);
-  } catch (e) { intended = null; $('aErr').textContent = e.message.replace('Firebase: ', ''); }
-};
-$('btnOut').onclick = () => auth.signOut();
-$('btnAll').onclick = () => { closeCase(); showAdminHome(); };
 
-function cleanup() { baseUnsubs.forEach(f => f()); baseUnsubs = []; closeCase(); undoStack = []; $('btnUndo').disabled = true; }
-function closeCase() { caseUnsubs.forEach(f => f()); caseUnsubs = []; caseId = null; S = null; pendingEdit = {}; }
+function loginScreen(){
+  document.body.innerHTML = `
+    <div style="min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--paper);">
+      <div class="panel" style="max-width:430px;width:100%;">
+        <div class="brand" style="margin-bottom:18px;"><span class="mark">📜 Casefile</span><span class="tag">Secure registration portal</span></div>
+        <div class="viewswitch" style="width:100%;margin-bottom:18px;">
+          <button id="loginClient" class="active" style="flex:1;">Client</button>
+          <button id="loginAdmin" style="flex:1;">Admin</button>
+        </div>
+        <h3 id="authTitle">Client login</h3>
+        <p id="authHelp" class="explainer">Sign in to your case portal, or create a client account and wait for approval.</p>
+        <input id="authName" placeholder="Full name (sign-up only)" style="display:none;width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);margin:5px 0;">
+        <input id="authEmail" type="email" placeholder="Email" autocomplete="email" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);margin:5px 0;">
+        <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);margin:5px 0;">
+        <div id="signupOnly" style="display:none;margin:8px 0;font-size:12px;color:var(--ink-soft);">New client accounts require admin approval before a case can be accessed.</div>
+        <div class="btnrow" style="margin-top:14px;">
+          <button class="act primary" id="authSubmit">Sign in</button>
+          <button class="act" id="authToggle">Create client account</button>
+        </div>
+        <p id="authStatus" style="font-size:12px;color:var(--ink-soft);margin-top:12px;"></p>
+      </div>
+    </div>
+    <div id="toast" style="display:none;position:fixed;right:18px;bottom:18px;padding:11px 15px;border-radius:8px;background:var(--ink);color:var(--paper);font-size:12px;z-index:100;"></div>`;
+  bindAuthUI();
+}
 
-auth.onAuthStateChanged(async u => {
-  cleanup(); me = u; role = null;
-  ['btnOut', 'btnAll', 'btnUndo'].forEach(i => $(i).classList.add('hidden'));
-  if (!u) { $('who').textContent = ''; show('auth'); return; }
-  $('who').textContent = u.email; $('btnOut').classList.remove('hidden');
-  let isAdm = false;
-  try { isAdm = (await db.doc('admins/' + u.uid).get()).exists; } catch (e) {}
-  if ((intended === 'admin' && !isAdm) || (intended === 'client' && isAdm)) {
-    intended = null; await auth.signOut();
-    $('aErr').textContent = isAdm ? 'This is an admin account — use the Admin tab.' : 'This account does not have admin access.';
-    return;
+function bindAuthUI(){
+  let admin=false, signup=false;
+  const clientBtn=document.getElementById('loginClient'), adminBtn=document.getElementById('loginAdmin');
+  const title=document.getElementById('authTitle'), help=document.getElementById('authHelp');
+  const name=document.getElementById('authName'), signupOnly=document.getElementById('signupOnly');
+  const submit=document.getElementById('authSubmit'), toggle=document.getElementById('authToggle');
+  const status=document.getElementById('authStatus');
+
+  function refresh(){
+    clientBtn.classList.toggle('active',!admin); adminBtn.classList.toggle('active',admin);
+    title.textContent=admin?'Admin login':signup?'Client sign-up':'Client login';
+    help.textContent=admin?'Admin accounts are created manually in Firebase Console.':signup?'Create an account, then wait for the administrator to approve your case.':'Sign in to your case portal.';
+    name.style.display=(!admin&&signup)?'block':'none'; signupOnly.style.display=(!admin&&signup)?'block':'none';
+    submit.textContent=signup?'Create account':'Sign in';
+    toggle.style.display=admin?'none':'inline-block';
+    toggle.textContent=signup?'Back to login':'Create client account';
+    status.textContent='';
   }
-  intended = null; role = isAdm ? 'admin' : 'client'; currentView = isAdm ? 'staff' : 'client';
-  if (isAdm) {
-    baseUnsubs.push(db.collection('users').onSnapshot(s => { U = s.docs.map(d => ({ id: d.id, ...d.data() })); if (!caseId) renderAdminHome(); }, e => toast(e.message)));
-    showAdminHome();
-  } else {
-    baseUnsubs.push(db.doc('users/' + u.uid).onSnapshot(d => {
-      const v = d.data();
-      if (!v) { pend('Setting up your account…', 'One moment.'); return; }
-      if (v.status === 'approved' && v.caseId) { if (caseId !== v.caseId) openCase(v.caseId); }
-      else { closeCase(); v.status === 'rejected' ? pend('Access not granted', 'Your request was declined or your access was revoked. Please contact your coordinator.') : pend('Waiting for approval', 'Thanks ' + (v.name || '') + '! Your coordinator needs to approve your account before you can open the portal. This page updates automatically.'); }
-    }, e => toast(e.message)));
+  clientBtn.onclick=()=>{admin=false;signup=false;refresh();};
+  adminBtn.onclick=()=>{admin=true;signup=false;refresh();};
+  toggle.onclick=()=>{signup=!signup;refresh();};
+
+  submit.onclick=async()=>{
+    status.textContent='Working…'; submit.disabled=true;
+    try{
+      const email=document.getElementById('authEmail').value.trim();
+      const pw=document.getElementById('authPassword').value;
+      if(!email||!pw) throw new Error('Enter your email and password.');
+      if(signup){
+        const fullName=name.value.trim(); if(!fullName) throw new Error('Enter your full name.');
+        const cred=await createUserWithEmailAndPassword(auth,email,pw);
+        await setDoc(doc(db,'users',cred.user.uid),{
+          email, name:fullName, role:'client', status:'pending',
+          createdAt:serverTimestamp()
+        });
+        await signOut(auth);
+        status.textContent='Account created. An administrator must approve it before you can sign in.';
+        signup=false; refresh();
+        return;
+      }
+      await signInWithEmailAndPassword(auth,email,pw);
+    }catch(e){status.textContent=e.message||'Authentication failed.'; }
+    finally{submit.disabled=false;}
+  };
+  refresh();
+}
+
+async function loadProfile(uid){
+  const snap=await getDoc(doc(db,'users',uid));
+  if(!snap.exists()){
+    // Admins are intentionally not auto-created here.
+    const a=await getDoc(doc(db,'admins',uid));
+    if(a.exists()) return {uid,role:'admin',status:'active',email:auth.currentUser.email};
+    return null;
   }
-});
-function pend(t, m) { $('pendTitle').textContent = t; $('pendMsg').textContent = m; show('pending'); }
-
-// ---------- admin home ----------
-function showAdminHome() { closeCase(); $('btnAll').classList.add('hidden'); $('btnUndo').classList.add('hidden'); show('adminHome'); renderAdminHome(); }
-function renderAdminHome() {
-  if (role !== 'admin') return;
-  const sec = (title, list, btns) => `<div class="panel"><h3>${title} (${list.length})</h3>${list.map(u => `<div class="urow"><div>${escapeHtml(u.name)}<small>${escapeHtml(u.email)}</small></div><div class="btnrow">${btns(u)}</div></div>`).join('') || '<p class="explainer">Nobody here.</p>'}</div>`;
-  $('adminHome').innerHTML = `<div class="case-head"><div><h1>Admin console</h1><div class="addr">Approve new clients and open their cases</div></div></div>`
-    + sec('Pending approval', U.filter(u => u.status === 'pending'), u => `<button class="act approve" data-ap="${u.id}">Approve</button><button class="act request" data-rj="${u.id}">Reject</button>`)
-    + sec('Active clients', U.filter(u => u.status === 'approved'), u => `<button class="act primary" data-op="${u.caseId}">Open case</button><button class="act" data-rv="${u.id}">Revoke</button>`)
-    + sec('Rejected / revoked', U.filter(u => u.status === 'rejected'), u => `<button class="act" data-ap="${u.id}">Re-approve</button>`);
-  $('adminHome').querySelectorAll('[data-ap]').forEach(b => b.onclick = () => approveUser(b.dataset.ap));
-  $('adminHome').querySelectorAll('[data-rj]').forEach(b => b.onclick = () => db.doc('users/' + b.dataset.rj).update({ status: 'rejected' }).catch(e => toast(e.message)));
-  $('adminHome').querySelectorAll('[data-rv]').forEach(b => b.onclick = () => confirmModal('Revoke this client\'s access? They will be locked out immediately.', () => revokeUser(b.dataset.rv)));
-  $('adminHome').querySelectorAll('[data-op]').forEach(b => b.onclick = () => openCase(b.dataset.op));
-}
-async function approveUser(uid) {
-  const u = U.find(x => x.id === uid); if (!u) return;
-  try {
-    const b = db.batch(); let cref;
-    if (u.caseId) { cref = db.doc('cases/' + u.caseId); b.update(cref, { clientUid: uid }); }
-    else {
-      const title = prompt('Case title', u.name + '\'s Property'); if (!title) return;
-      const address = prompt('Property location (e.g. Whitefield, Bengaluru)', '') || '';
-      cref = db.collection('cases').doc();
-      b.set(cref, { title, address, clientUid: uid, flags: { hasPOA: false, hasLoan: false }, createdAt: TS() });
-      STAGE_TEMPLATE.forEach((s, i) => b.set(cref.collection('stages').doc(s.id), { status: i ? 'pending' : 'in_progress', proofNote: '', files: [], approved: false }));
-    }
-    b.update(db.doc('users/' + uid), { status: 'approved', caseId: cref.id });
-    await b.commit();
-  } catch (e) { toast(e.message); }
-}
-async function revokeUser(uid) {
-  const u = U.find(x => x.id === uid); const b = db.batch();
-  b.update(db.doc('users/' + uid), { status: 'rejected' });
-  if (u.caseId) b.update(db.doc('cases/' + u.caseId), { clientUid: '' });
-  try { await b.commit(); } catch (e) { toast(e.message); }
+  return {uid,...snap.data()};
 }
 
-// ---------- case subscriptions ----------
-function openCase(id) {
-  closeCase(); caseId = id; S = fresh();
-  const sub = (q, fn) => caseUnsubs.push(q.onSnapshot(fn, e => toast(e.message)));
-  sub(db.doc('cases/' + id), d => { const v = d.data() || {}; S.flags = v.flags || {}; S.title = v.title || ''; S.address = v.address || ''; schedule(); });
-  sub(CC('stages'), s => {
-    S.stageData = {}; s.forEach(d => S.stageData[d.id] = d.data());
-    if (!S.init && s.size) { S.init = true; const f = visibleStages(S.flags).find(x => (S.stageData[x.id] || {}).status !== 'done'); if (f) S.selected = f.id; }
-    schedule();
+async function findCaseForClient(uid){
+  const q=query(collection(db,'cases'),where('clientUid','==',uid),limit(1));
+  const s=await getDocs(q); return s.empty?null:{id:s.docs[0].id,...s.docs[0].data()};
+}
+
+async function createCaseForClient(profile){
+  const ref=doc(collection(db,'cases'));
+  const flags={hasPOA:true,hasLoan:true};
+  const stages={};
+  visibleStages(flags).forEach((s,i)=>stages[s.id]={
+    status:i===0?'in_progress':'pending', proofNote:'', approved:false,
+    files:[], baselineText:'', clientText:'', editingLocked:true,
+    updatedAt:serverTimestamp()
   });
-  sub(CC('messages').orderBy('ts'), s => {
-    S.messages = {}; s.forEach(d => { const v = d.data({ serverTimestamps: 'estimate' }); v.id = d.id; (S.messages[v.stageId] = S.messages[v.stageId] || []).push(v); }); schedule();
+  await setDoc(ref,{
+    clientUid:profile.uid, clientName:profile.name||profile.email,
+    property:"Rahul & Meena's Flat", address:'Whitefield, Bengaluru',
+    flags, selectedStage:'agreement', stages,
+    createdAt:serverTimestamp(), updatedAt:serverTimestamp()
   });
-  sub(CC('documents'), s => { S.documents = {}; s.forEach(d => S.documents[d.id] = d.data({ serverTimestamps: 'estimate' })); schedule(); });
-  sub(CC('drafts'), s => { S.drafts = {}; s.forEach(d => S.drafts[d.id] = d.data()); schedule(); });
-  show('app');
-  $('btnAll').classList.toggle('hidden', role !== 'admin'); $('btnUndo').classList.toggle('hidden', role !== 'admin');
-}
-
-// ---------- undo (admin) ----------
-function pushUndo(fn) { undoStack.push(fn); if (undoStack.length > 30) undoStack.shift(); $('btnUndo').disabled = false; }
-$('btnUndo').onclick = () => {
-  if (!undoStack.length) return;
-  confirmModal('Undo your last action? This reverts the most recent change.', async () => {
-    try { await undoStack.pop()(); } catch (e) { toast(e.message); }
-    $('btnUndo').disabled = !undoStack.length;
+  await addDoc(collection(ref,'messages'),{
+    stageId:'agreement',from:'staff',
+    text:'Welcome to Casefile. Your registration case has been approved.',
+    createdAt:serverTimestamp()
   });
-};
+  return ref.id;
+}
 
-// ---------- file storage (Firestore chunks, free plan) ----------
-function readDataUrl(f) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); }
-async function saveFile(f) {
-  if (f.size > MAX_FILE) throw new Error(f.name + ' is over 3 MB. Please compress it first.');
-  if (!/^(application\/pdf|image\/)/.test(f.type)) throw new Error('Only PDF or image files are allowed.');
-  const url = await readDataUrl(f), n = Math.ceil(url.length / CHUNK), fref = CC('files').doc();
-  const b = db.batch();
-  b.set(fref, { name: f.name, chunks: n, by: me.uid, ts: TS() });
-  for (let i = 0; i < n; i++) b.set(fref.collection('chunks').doc(String(i).padStart(3, '0')), { data: url.slice(i * CHUNK, (i + 1) * CHUNK) });
-  await b.commit();
-  return { name: f.name, fid: fref.id };
-}
-async function loadFile(fid) {
-  const s = await CC(`files/${fid}/chunks`).get(); let out = ''; s.forEach(d => out += d.data().data); return out;
-}
-async function saveFiles(list) { const r = []; for (const f of list) r.push(await saveFile(f)); return r; }
-
-// ---------- diff / track changes ----------
-function diffWords(a, b) {
-  const x = a.split(/(\s+)/).filter(Boolean), y = b.split(/(\s+)/).filter(Boolean), n = x.length, m = y.length, out = [];
-  const push = (t, s) => { const l = out[out.length - 1]; l && l.t === t ? l.s += s : out.push({ t, s }); };
-  if (a === b) return a ? [{ t: 'eq', s: a }] : [];
-  if (n * m > 6e6) { push('del', a); push('ins', b); return out; }
-  const L = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
-  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i][j] = x[i] === y[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
-  let i = 0, j = 0;
-  while (i < n && j < m) { if (x[i] === y[j]) { push('eq', x[i]); i++; j++; } else if (L[i + 1][j] >= L[i][j + 1]) push('del', x[i++]); else push('ins', y[j++]); }
-  while (i < n) push('del', x[i++]); while (j < m) push('ins', y[j++]);
-  return out;
-}
-function rebuild(segs, gi, mode) {
-  let g = -1, prevEq = true, B = '', Cc = '';
-  for (const s of segs) {
-    if (s.t === 'eq') { B += s.s; Cc += s.s; prevEq = true; continue; }
-    if (prevEq) { g++; prevEq = false; }
-    const hit = g === gi;
-    if (s.t === 'del') { if (!(hit && mode === 'accept')) B += s.s; if (hit && mode === 'reject') Cc += s.s; }
-    else { if (!(hit && mode === 'reject')) Cc += s.s; if (hit && mode === 'accept') B += s.s; }
+async function subscribeClientCase(){
+  if(unsubscribeCase) unsubscribeCase();
+  let c=await findCaseForClient(userProfile.uid);
+  if(!c){
+    if(userProfile.status==='pending'){showWaiting();return;}
+    if(userProfile.status==='revoked'){showRevoked();return;}
+    showWaiting(); return;
   }
-  return { baseline: B, current: Cc };
-}
-function renderDiff(segs) {
-  let g = -1, h = '';
-  segs.forEach((s, i) => {
-    const e = escapeHtml(s.s);
-    if (s.t === 'eq') { h += e; return; }
-    if (i === 0 || segs[i - 1].t === 'eq') g++;
-    h += s.t === 'ins' ? `<ins>${e}</ins>` : `<del>${e}</del>`;
-    if (i === segs.length - 1 || segs[i + 1].t === 'eq') h += `<span class="gb"><button data-d="acc" data-g="${g}" title="Accept this change">✓</button><button data-d="rej" data-g="${g}" title="Reject this change">✕</button></span>`;
-  });
-  return h || '<span style="color:var(--ink-soft)">Document is empty.</span>';
-}
-async function draftAct(a, sid, g) {
-  const d = S.drafts[sid], ref = C('drafts/' + sid);
-  const prev = d ? { baseline: d.baseline, current: d.current, locked: !!d.locked } : null;
-  let upd;
-  if (a === 'hist') return showHistory(sid);
-  if (a === 'publish') { const t = val('baseEd').trim(); if (!t) return; upd = { baseline: t, current: t, locked: false }; }
-  else if (!d) return;
-  else if (a === 'lock') upd = { locked: !d.locked };
-  else if (a === 'acceptAll') upd = { baseline: d.current };
-  else if (a === 'rejectAll') upd = { current: d.baseline };
-  else if (a === 'acc' || a === 'rej') upd = rebuild(diffWords(d.baseline, d.current), +g, a === 'acc' ? 'accept' : 'reject');
-  else return;
-  upd.updatedBy = me.uid; upd.updatedAt = TS();
-  try {
-    if (prev) await CC(`drafts/${sid}/revisions`).add({ text: prev.current, by: me.uid, role: 'admin', ts: TS() });
-    await ref.set(upd, { merge: true });
-    pushUndo(() => prev ? ref.set({ ...prev, updatedBy: me.uid, updatedAt: TS() }, { merge: true }) : ref.delete());
-  } catch (e) { toast(e.message); }
-}
-async function showHistory(sid) {
-  try {
-    const s = await CC(`drafts/${sid}/revisions`).orderBy('ts', 'desc').limit(12).get();
-    const rows = s.docs.map(d => { const v = d.data({ serverTimestamps: 'estimate' }); return `<div class="hist-row"><div>${v.role === 'admin' ? 'Coordinator' : 'Client'} · ${fmt(v.ts)}<small>${escapeHtml(v.text.slice(0, 90))}…</small></div><button class="act" data-rs="${d.id}">Restore</button></div>`; }).join('') || '<p>No history yet.</p>';
-    openModal(`<h4>Version history</h4>${rows}<div class="btnrow" style="margin-top:14px;"><button class="act" id="hClose">Close</button></div>`);
-    $('hClose').onclick = closeModal;
-    document.querySelectorAll('[data-rs]').forEach(b => b.onclick = async () => {
-      const text = s.docs.find(d => d.id === b.dataset.rs).data().text, d = S.drafts[sid];
-      closeModal();
-      try {
-        await CC(`drafts/${sid}/revisions`).add({ text: d.current, by: me.uid, role: 'admin', ts: TS() });
-        const prev = d.current;
-        await C('drafts/' + sid).update({ current: text, updatedBy: me.uid, updatedAt: TS() });
-        pushUndo(() => C('drafts/' + sid).update({ current: prev, updatedBy: me.uid, updatedAt: TS() }));
-      } catch (e) { toast(e.message); }
-    });
-  } catch (e) { toast(e.message); }
-}
-function queueSave(sid, text) {
-  pendingEdit[sid] = text; clearTimeout(saveTimers[sid]);
-  saveTimers[sid] = setTimeout(async () => {
-    try {
-      await C('drafts/' + sid).update({ current: text, updatedBy: me.uid, updatedAt: TS() });
-      await CC(`drafts/${sid}/revisions`).add({ text, by: me.uid, role: 'client', ts: TS() });
-      if (pendingEdit[sid] === text) delete pendingEdit[sid];
-    } catch (e) { toast(e.message); }
-  }, 1200);
-}
-function draftPanel(stage, isStaff) {
-  if (!stage.approval) return '';
-  const d = S.drafts[stage.id]; let h = '<div class="panel"><h3>Live document · track changes</h3>';
-  if (isStaff) {
-    h += `<p class="explainer">Paste the document text and publish it. The client can edit it here; every change is highlighted below and you can accept or reject each one.</p>`;
-    if (d) {
-      const changed = d.current !== d.baseline;
-      h += `<div class="statusbar"><span class="statuschip ${d.locked ? 'pending' : 'done'}">${d.locked ? 'Editing locked' : 'Client can edit'}</span>${changed ? '<span class="statuschip waiting_client">✎ Unreviewed changes</span>' : ''}</div>
-        <div class="diff">${renderDiff(diffWords(d.baseline, d.current))}</div>
-        <div class="btnrow" style="margin-bottom:16px;"><button class="act" data-d="lock">${d.locked ? '🔓 Unlock editing' : '🔒 Lock editing'}</button><button class="act approve" data-d="acceptAll" ${changed ? '' : 'disabled'}>Accept all</button><button class="act request" data-d="rejectAll" ${changed ? '' : 'disabled'}>Reject all</button><button class="act" data-d="hist">History</button></div>`;
-    }
-    h += `<textarea class="ed" id="baseEd" style="min-height:120px;" placeholder="Paste or type the document text to share…">${escapeHtml(d ? d.baseline : '')}</textarea>
-      <div class="btnrow"><button class="act primary" data-d="publish">${d ? 'Publish as new baseline' : 'Publish for client'}</button></div>`;
-  } else if (!d) h += `<p class="explainer">Your coordinator hasn't shared a live document for this stage yet.</p>`;
-  else {
-    h += `<p class="explainer">${d.locked ? 'Editing is locked by your coordinator right now.' : 'Edit the text directly — changes save automatically and your coordinator sees them highlighted.'}</p>
-      <textarea class="ed" id="draftEd" ${d.locked ? 'disabled' : ''}>${escapeHtml(pendingEdit[stage.id] != null ? pendingEdit[stage.id] : d.current)}</textarea>
-      <div class="btnrow"><button class="act" data-d="reset" ${d.locked || d.current === d.baseline ? 'disabled' : ''}>Undo my edits</button></div>`;
-  }
-  return h + '</div>';
+  currentCase=c; currentView='client'; selectedStage=c.selectedStage||'agreement';
+  unsubscribeCase=onSnapshot(doc(db,'cases',c.id),snap=>{
+    if(!snap.exists()){showWaiting();return;}
+    currentCase={id:snap.id,...snap.data()}; selectedStage=currentCase.selectedStage||selectedStage; renderApp();
+  },err=>notify(err.message,true));
+  subscribeMessages();
 }
 
-// ---------- rendering ----------
-function renderFlags() {
-  const isStaff = currentView === 'staff';
-  const defs = [{ key: 'hasPOA', label: 'Has POA' }, { key: 'hasLoan', label: 'Has Loan' }];
-  $('flagsWrap').innerHTML = `<div class="flags">${defs.map(d => `<span class="flag ${S.flags[d.key] ? 'on' : ''} ${isStaff ? '' : 'locked'}" data-key="${d.key}">${d.label}${S.flags[d.key] ? ' ✓' : ''}</span>`).join('')}</div>`;
-  if (isStaff) $('flagsWrap').querySelectorAll('.flag').forEach(el => el.onclick = async () => {
-    const k = el.dataset.key, was = !!S.flags[k];
-    try { await db.doc('cases/' + caseId).update({ ['flags.' + k]: !was }); pushUndo(() => db.doc('cases/' + caseId).update({ ['flags.' + k]: was })); } catch (e) { toast(e.message); }
+function subscribeMessages(){
+  if(unsubscribeMessages) unsubscribeMessages();
+  if(!currentCase)return;
+  const q=query(collection(db,'cases',currentCase.id,'messages'),orderBy('createdAt','asc'));
+  unsubscribeMessages=onSnapshot(q,s=>{
+    currentCase._messages=s.docs.map(d=>({id:d.id,...d.data()})); renderApp();
   });
 }
-function renderSteps() {
-  const stages = visibleStages(S.flags), isStaff = currentView === 'staff';
-  $('stepsList').innerHTML = stages.map(s => {
-    const d = S.stageData[s.id] || { status: 'pending' }, dr = S.drafts[s.id];
-    const dot = d.status === 'done' ? 'done' : d.status === 'waiting_client' ? 'waiting' : d.status === 'in_progress' ? 'progress' : '';
-    const edited = isStaff && dr && dr.current !== dr.baseline ? ' · <span class="edited">✎ client edits</span>' : '';
-    return `<li class="step ${S.selected === s.id ? 'selected' : ''}" data-id="${s.id}"><div class="dot ${dot}">${d.status === 'done' ? '✓' : ''}</div><div><div class="label">${s.name}</div><div class="status-line">${statusLabel(d.status)}${edited}</div></div></li>`;
+
+async function subscribeAdmin(){
+  currentView='admin';
+  renderAdmin();
+}
+
+function showWaiting(){
+  document.body.innerHTML=`<div style="min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--paper);">
+    <div class="panel" style="max-width:520px;width:100%;text-align:center;">
+      <div style="font-size:38px;">⏳</div><h3>Waiting for approval</h3>
+      <p class="explainer">Your account has been created. An administrator needs to approve your case before you can access the portal.</p>
+      <button class="act" id="waitLogout">Sign out</button>
+    </div></div>`;
+  document.getElementById('waitLogout').onclick=()=>signOut(auth);
+}
+function showRevoked(){
+  document.body.innerHTML=`<div style="min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--paper);"><div class="panel" style="max-width:520px;text-align:center;"><h3>Access revoked</h3><p class="explainer">Your portal access has been revoked. Please contact the administrator if you believe this is incorrect.</p><button class="act" id="revLogout">Sign out</button></div></div>`;
+  document.getElementById('revLogout').onclick=()=>signOut(auth);
+}
+
+function renderApp(){
+  if(!currentCase)return;
+  const isAdmin=currentView==='admin';
+  document.body.innerHTML=`
+  <div class="topbar">
+    <div class="brand"><span class="mark">📜 Casefile</span><span class="tag">Sale Deed Registration</span></div>
+    <div class="topright">
+      ${isAdmin?'<button class="act" id="adminCases">Cases</button>':''}
+      <span style="font-size:12px;color:var(--ink-soft);">${esc(userProfile.email||'')}</span>
+      <button class="act" id="logoutBtn">Sign out</button>
+      ${isAdmin?'<button class="act" id="btnUndo" disabled>↺ Undo</button>':''}
+    </div>
+  </div>
+  <div class="layout">
+    <div class="rail"><h2>${esc(currentCase.property||"Client's Case")}</h2><div class="sub">${esc(currentCase.address||'')}</div><div id="flagsWrap"></div><ul class="steps" id="stepsList"></ul></div>
+    <div class="main" id="mainPanel"></div>
+  </div>
+  <div class="modal-backdrop" id="modalBackdrop"><div class="modal" id="modalBox"></div></div>
+  <div id="toast" style="display:none;position:fixed;right:18px;bottom:18px;padding:11px 15px;border-radius:8px;background:var(--ink);color:var(--paper);font-size:12px;z-index:100;"></div>`;
+  document.getElementById('logoutBtn').onclick=()=>signOut(auth);
+  if(isAdmin) document.getElementById('adminCases').onclick=renderAdmin;
+  renderFlags(); renderSteps(); renderMain();
+}
+
+function renderFlags(){
+  const isAdmin=currentView==='admin';
+  const defs=[{key:'hasPOA',label:'Has POA'},{key:'hasLoan',label:'Has Loan'}];
+  document.getElementById('flagsWrap').innerHTML=`<div class="flags">${defs.map(d=>`<span class="flag ${currentCase.flags?.[d.key]?'on':''} ${isAdmin?'':'locked'}" data-key="${d.key}">${d.label}${currentCase.flags?.[d.key]?' ✓':''}</span>`).join('')}</div>`;
+  if(isAdmin) document.querySelectorAll('.flag').forEach(el=>el.onclick=()=>toggleFlag(el.dataset.key));
+}
+
+function renderSteps(){
+  const stages=visibleStages(currentCase.flags||{});
+  document.getElementById('stepsList').innerHTML=stages.map(s=>{
+    const d=currentCase.stages?.[s.id]||{status:'pending'};
+    const dotClass=d.status==='done'?'done':d.status==='waiting_client'?'waiting':d.status==='in_progress'?'progress':'';
+    return `<li class="step ${selectedStage===s.id?'selected':''}" data-id="${s.id}"><div class="dot ${dotClass}">${d.status==='done'?'✓':''}</div><div><div class="label">${esc(s.name)}</div><div class="status-line">${statusLabel(d.status)}</div>${d.clientEdited?'✎ client edits':''}</div></li>`;
   }).join('');
-  $('stepsList').querySelectorAll('.step').forEach(el => el.onclick = () => { S.selected = el.dataset.id; renderAll(); });
-}
-function renderMain() {
-  const stage = STAGE_TEMPLATE.find(s => s.id === S.selected);
-  const data = S.stageData[stage.id] || { status: 'pending', proofNote: '', files: [] };
-  const isStaff = currentView === 'staff';
-  // keep whatever the user is typing
-  const keep = {}, act = document.activeElement && document.activeElement.id, same = lastStage === stage.id;
-  ['msgBox', 'baseEd'].forEach(i => { if ($(i) && same) keep[i] = $(i).value; });
-  const selStart = act && $(act) && $(act).selectionStart;
-
-  let actionsHtml = '';
-  if (isStaff) {
-    const btns = [`<button class="act" data-a="mark_progress" ${data.status !== 'pending' ? 'disabled' : ''}>Mark in progress</button>`];
-    if (stage.approval) btns.push(`<button class="act primary" data-a="send_draft" ${data.status === 'pending' || data.status === 'done' ? 'disabled' : ''}>${data.status === 'waiting_client' ? 'Revise & resend draft' : 'Send draft for review'}</button>`);
-    else btns.push(`<button class="act" data-a="mark_done" ${data.status === 'done' ? 'disabled' : ''}>Mark done + attach proof</button>`);
-    actionsHtml = `<div class="btnrow">${btns.join('')}</div>`;
-  } else if (data.status === 'waiting_client' && stage.approval) actionsHtml = `<div class="btnrow"><button class="act approve" data-a="approve">Approve, looks good</button><button class="act request" data-a="request_changes">Request changes</button></div>`;
-  else if (data.status === 'done') actionsHtml = `<div class="btnrow"><button class="act" disabled>Completed</button></div>`;
-  else if (data.status === 'in_progress') actionsHtml = `<div class="btnrow"><button class="act" disabled>Your coordinator is working on this</button></div>`;
-  else actionsHtml = `<div class="btnrow"><button class="act" disabled>Nothing needed from you right now</button></div>`;
-
-  const files = data.files || [];
-  const proofLabel = data.status === 'waiting_client' && stage.approval ? 'Draft attached for your review' : 'Proof attached by coordinator';
-  const proofHtml = data.proofNote || files.length ? `<div class="proofbox"><strong>${proofLabel}</strong>${escapeHtml(data.proofNote || '')}${files.length ? `<div class="proof-files">${files.map(f => `<a data-fid="${f.fid}" data-name="${escapeHtml(f.name)}">📎 ${escapeHtml(f.name)}</a>`).join('')}</div>` : ''}</div>` : '';
-
-  const msgs = S.messages[stage.id] || [];
-  const threadHtml = msgs.map(m => `<div class="msg ${m.from}">${escapeHtml(m.text)}<span class="meta">${m.from === 'staff' ? 'Coordinator' : 'Client'} · ${fmt(m.ts)}</span></div>`).join('') || `<div style="font-size:13px;color:var(--ink-soft);">No messages yet on this stage.</div>`;
-  const cannedHtml = isStaff ? `<div class="canned">${CANNED_RESPONSES.map((c, i) => `<span data-i="${i}">+ ${c.tag}</span>`).join('')}</div>` : '';
-
-  const docsHtml = `<div class="docs">${DOCUMENT_TYPES.map(dt => {
-    const doc = S.documents[dt.id] || {}, up = doc.uploaded;
-    let btns;
-    if (isStaff) btns = `<button ${up ? '' : 'disabled'} data-view="${dt.id}">${up ? 'View (no download)' : 'Not available'}</button>`;
-    else if (up) btns = `<button data-view="${dt.id}">View</button> <button data-upload="${dt.id}">Replace</button>`;
-    else btns = `<button data-upload="${dt.id}">Upload</button>`;
-    return `<div class="doc"><div class="name">${dt.name}${up ? ' ✓' : ''}</div><div class="meta">${up ? 'Uploaded ' + fmt(doc.uploadedAt) : 'Not uploaded yet'}</div>${btns}</div>`;
-  }).join('')}</div><div class="lockrow">${isStaff ? 'Staff access is view-only in this portal. Files are visible only to the assigned client and admins.' : 'Only you and your assigned coordinator can see these files.'}</div>`;
-
-  const stages = visibleStages(S.flags), done = stages.filter(s => (S.stageData[s.id] || {}).status === 'done').length;
-  $('railTitle').textContent = S.title; $('railSub').textContent = S.address;
-  $('mainPanel').innerHTML = `
-    <div class="case-head"><div><h1>${escapeHtml(S.title)}</h1><div class="addr">${escapeHtml(S.address)} · Sale Deed Registration</div></div><div class="progress-pill">${done} of ${stages.length} stages complete</div></div>
-    <div class="panel"><div class="statusbar"><h3 style="margin:0;">${stage.name}</h3><span class="statuschip ${data.status}">${statusLabel(data.status)}</span></div><p class="explainer">${stage.explainer}</p>${actionsHtml}${proofHtml}</div>
-    ${draftPanel(stage, isStaff)}
-    <div class="panel"><h3>Documents</h3>${docsHtml}</div>
-    <div class="panel"><h3>Questions on this stage</h3><div class="thread" id="thread">${threadHtml}</div>${cannedHtml}
-      <div class="composer"><textarea id="msgBox" placeholder="${isStaff ? 'Reply to the client, or click a canned response above to insert it…' : 'Ask a question about this stage…'}"></textarea><button class="act primary" id="sendMsg">Send</button></div></div>`;
-
-  Object.keys(keep).forEach(i => { if ($(i)) $(i).value = keep[i]; });
-  if (act && $(act)) { $(act).focus(); try { $(act).setSelectionRange(selStart, selStart); } catch (e) {} }
-  lastStage = stage.id;
-
-  const main = $('mainPanel');
-  main.querySelectorAll('[data-a]').forEach(b => b.onclick = () => (isStaff ? handleStaffAction : handleClientAction)(b.dataset.a, stage.id));
-  main.querySelectorAll('[data-d]').forEach(b => b.onclick = () => b.dataset.d === 'reset' ? resetMine(stage.id) : draftAct(b.dataset.d, stage.id, b.dataset.g));
-  main.querySelectorAll('[data-fid]').forEach(a => a.onclick = async () => { const url = await loadFile(a.dataset.fid).catch(e => toast(e.message)); if (!url) return; const l = document.createElement('a'); l.href = url; l.download = a.dataset.name; l.click(); });
-  main.querySelectorAll('[data-view]').forEach(b => b.onclick = () => openDocModal(b.dataset.view));
-  main.querySelectorAll('[data-upload]').forEach(b => b.onclick = () => triggerDocUpload(b.dataset.upload));
-  main.querySelectorAll('.canned span').forEach(el => el.onclick = () => { const box = $('msgBox'); box.value = (box.value ? box.value + '\n' : '') + CANNED_RESPONSES[el.dataset.i].text; box.focus(); });
-  if ($('draftEd')) $('draftEd').oninput = e => queueSave(stage.id, e.target.value);
-  $('sendMsg').onclick = () => sendMessage(stage.id);
-  const th = $('thread'); th.scrollTop = th.scrollHeight;
-}
-function renderAll() { if (!S) return; if (!visibleStages(S.flags).find(s => s.id === S.selected)) S.selected = visibleStages(S.flags)[0].id; renderFlags(); renderSteps(); renderMain(); }
-async function resetMine(sid) {
-  const d = S.drafts[sid]; delete pendingEdit[sid]; clearTimeout(saveTimers[sid]);
-  try { await C('drafts/' + sid).update({ current: d.baseline, updatedBy: me.uid, updatedAt: TS() }); await CC(`drafts/${sid}/revisions`).add({ text: d.baseline, by: me.uid, role: 'client', ts: TS() }); } catch (e) { toast(e.message); }
+  document.querySelectorAll('.step').forEach(el=>el.onclick=async()=>{selectedStage=el.dataset.id;await updateDoc(doc(db,'cases',currentCase.id),{selectedStage});renderSteps();renderMain();});
 }
 
-// ---------- modals ----------
-function openModal(html) { $('modalBox').innerHTML = html; $('modalBackdrop').classList.add('open'); }
-function closeModal() { $('modalBackdrop').classList.remove('open'); }
-function confirmModal(message, onYes) {
-  openModal(`<h4>Please confirm</h4><p>${escapeHtml(message)}</p><div class="btnrow" style="margin-top:14px;"><button class="act" id="cmCancel">Cancel</button><button class="act primary" id="cmYes">Confirm</button></div>`);
-  $('cmCancel').onclick = closeModal; $('cmYes').onclick = () => { closeModal(); onYes(); };
-}
-async function openDocModal(docId) {
-  const dt = DOCUMENT_TYPES.find(d => d.id === docId), doc = S.documents[docId];
-  if (!doc || !doc.uploaded) return;
-  openModal(`<h4>${escapeHtml(dt.name)}</h4><p>Loading…</p>`);
-  let url = ''; try { url = await loadFile(doc.fid); } catch (e) { toast(e.message); closeModal(); return; }
-  const preview = url.startsWith('data:image') ? `<img src="${url}" style="max-width:100%;border-radius:8px;border:1px solid var(--line);margin:10px 0;" />`
-    : url.startsWith('data:application/pdf') ? `<embed src="${url}" type="application/pdf" style="width:100%;height:340px;border-radius:8px;border:1px solid var(--line);margin:10px 0;" />` : '';
-  openModal(`<h4>${escapeHtml(dt.name)}</h4><p>${escapeHtml(doc.fileName)} · Uploaded ${fmt(doc.uploadedAt)}</p>${preview}<div class="btnrow" style="margin-top:14px;"><button class="act" id="dmClose">Close</button></div>`);
-  $('dmClose').onclick = closeModal;
-}
-function triggerDocUpload(docId) {
-  const pick = () => {
-    const input = document.createElement('input'); input.type = 'file'; input.accept = 'application/pdf,image/*';
-    input.onchange = async () => {
-      if (!input.files.length) return;
-      try {
-        toast('Uploading…'); const f = await saveFile(input.files[0]);
-        await C('documents/' + docId).set({ uploaded: true, fileName: f.name, fid: f.fid, uploadedAt: TS() });
-      } catch (e) { toast(e.message); }
-    };
-    input.click();
-  };
-  (S.documents[docId] || {}).uploaded ? confirmModal('Replace the current file with a new upload?', pick) : pick();
-}
-function fileModal(stageId, title, intro, cta, nextStatus, needFile) {
-  openModal(`<h4>${title}</h4><p>${intro}</p><textarea id="mNote" style="min-height:60px;" placeholder="Short note for the client…"></textarea><input type="file" id="mFiles" accept="application/pdf,image/*" multiple /><div class="btnrow" style="margin-top:16px;"><button class="act" id="mCancel">Cancel</button><button class="act primary" id="mGo">${cta}</button></div>`);
-  $('mCancel').onclick = closeModal;
-  $('mGo').onclick = async () => {
-    const fl = $('mFiles').files; if (needFile && !fl.length) { toast('Please attach at least one file.'); return; }
-    const note = $('mNote').value.trim(), d = S.stageData[stageId], prev = { status: d.status, proofNote: d.proofNote || '', files: d.files || [] };
-    $('mGo').disabled = true;
-    try {
-      const nf = await saveFiles(Array.from(fl));
-      await C('stages/' + stageId).update({ status: nextStatus, proofNote: note || (nextStatus === 'done' ? 'Marked done.' : 'Draft attached for your review.'), files: prev.files.concat(nf) });
-      pushUndo(() => C('stages/' + stageId).update(prev));
-      closeModal();
-      if (nextStatus === 'done') { const st = visibleStages(S.flags), i = st.findIndex(s => s.id === stageId); if (i < st.length - 1) S.selected = st[i + 1].id; }
-    } catch (e) { toast(e.message); $('mGo').disabled = false; }
-  };
-}
+function progressText(){const st=visibleStages(currentCase.flags||{});const done=st.filter(s=>(currentCase.stages?.[s.id]?.status)==='done').length;return `${done} of ${st.length} stages complete`;}
 
-// ---------- actions ----------
-function handleStaffAction(a, sid) {
-  const stage = STAGE_TEMPLATE.find(s => s.id === sid);
-  if (a === 'mark_done') fileModal(sid, `Mark "${escapeHtml(stage.name)}" as done`, 'Add a note and attach PDF/image proof (max 3 MB each). The client sees it too.', 'Mark done', 'done', false);
-  if (a === 'send_draft') fileModal(sid, 'Send draft for review', 'Attach the draft file. The client will see Approve / Request Changes.', 'Send to client', 'waiting_client', true);
-  if (a === 'mark_progress') confirmModal('Mark this stage as in progress?', async () => {
-    const prev = { status: S.stageData[sid].status };
-    try { await C('stages/' + sid).update({ status: 'in_progress' }); pushUndo(() => C('stages/' + sid).update(prev)); } catch (e) { toast(e.message); }
-  });
-}
-function handleClientAction(a, sid) {
-  if (a === 'approve') confirmModal('Approve this stage? Your coordinator will be notified to proceed.', async () => {
-    try {
-      const d = S.stageData[sid];
-      await C('stages/' + sid).update({ status: 'done', approved: true, proofNote: d.proofNote || 'Client approved this stage.' });
-      await addMessage(sid, 'Approved — looks good, please proceed to the next step.');
-      const st = visibleStages(S.flags), i = st.findIndex(s => s.id === sid); if (i < st.length - 1) S.selected = st[i + 1].id;
-    } catch (e) { toast(e.message); }
-  });
-  if (a === 'request_changes') {
-    openModal(`<h4>Request changes</h4><p>Tell your coordinator what needs to change.</p><textarea id="rcText" style="min-height:80px;" placeholder="e.g. Please correct the survey number in the schedule."></textarea><div class="btnrow" style="margin-top:12px;"><button class="act" id="rcCancel">Cancel</button><button class="act request" id="rcSubmit">Send request</button></div>`);
-    $('rcCancel').onclick = closeModal;
-    $('rcSubmit').onclick = async () => {
-      const t = val('rcText').trim(); if (!t) return;
-      try { await C('stages/' + sid).update({ status: 'in_progress' }); await addMessage(sid, 'Requesting changes: ' + t); closeModal(); } catch (e) { toast(e.message); }
-    };
+function renderMain(){
+  const stage=STAGE_TEMPLATE.find(s=>s.id===selectedStage)||STAGE_TEMPLATE[0];
+  const d=currentCase.stages?.[stage.id]||{status:'pending',files:[],baselineText:'',clientText:''};
+  const isAdmin=currentView==='admin';
+  const msgs=(currentCase._messages||[]).filter(m=>m.stageId===stage.id);
+  let actions='';
+  if(isAdmin){
+    const sendLabel=d.status==='waiting_client'?'Revise & resend draft':'Send draft for review';
+    actions=`<div class="btnrow">
+      <button class="act" data-action="progress" ${d.status!=='pending'?'disabled':''}>Mark in progress</button>
+      ${stage.approval?`<button class="act primary" data-action="send" ${d.status==='pending'||d.status==='done'?'disabled':''}>${sendLabel}</button>`:`<button class="act" data-action="done" ${d.status==='done'?'disabled':''}>Mark done + attach proof</button>`}
+      ${stage.approval?`<button class="act" data-action="editor">${d.editingLocked?'Open client editing':'Lock client editing'}</button>`:''}
+      ${stage.approval?`<button class="act" data-action="history">History</button>`:''}
+    </div>`;
+  } else if(d.status==='waiting_client'&&stage.approval){
+    actions=`<div class="btnrow"><button class="act approve" data-action="approve">Approve, looks good</button><button class="act request" data-action="changes">Request changes</button></div>`;
+  } else actions=`<div class="btnrow"><button class="act" disabled>${d.status==='done'?'Completed':'Nothing needed from you right now'}</button></div>`;
+
+  const fileHtml=(d.files||[]).map((f,i)=>`<button class="act" style="font-size:11px;" data-file-index="${i}">📎 ${esc(f.name||'attachment')}</button>`).join(' ');
+  const editor = stage.approval && d.baselineText ? `
+    <div class="panel" style="margin-top:20px;">
+      <h3>Document editor</h3>
+      <p class="explainer">${isAdmin?'Baseline and client edits are stored as versions.':'Edit the document only while your coordinator has unlocked it. Your changes autosave after you pause typing.'}</p>
+      ${isAdmin && d.clientText ? `<div style="padding:12px;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;font-size:13px;">${highlightChanges(d.baselineText,d.clientText)}</div>`:''}
+      ${!isAdmin ? `<textarea id="clientEditor" ${d.editingLocked?'disabled':''} style="width:100%;min-height:260px;font-family:var(--sans);font-size:13px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);">${esc(d.clientText||d.baselineText)}</textarea>
+      <div class="btnrow" style="margin-top:10px;"><button class="act" id="undoEdits">Undo my edits</button></div>`:''}
+    </div>` : '';
+
+  document.getElementById('mainPanel').innerHTML=`
+    <div class="case-head"><div><h1>${esc(currentCase.property||'Case')}</h1><div class="addr">${esc(currentCase.address||'')} · Sale Deed Registration</div></div><div class="progress-pill">${progressText()}</div></div>
+    <div class="panel"><div class="statusbar"><h3 style="margin:0;">${esc(stage.name)}</h3><span class="statuschip ${d.status}">${statusLabel(d.status)}</span></div>
+      <p class="explainer">${esc(stage.explainer)}</p>${actions}
+      ${(d.proofNote||fileHtml)?`<div class="proofbox"><strong>${d.status==='waiting_client'?'Draft attached for your review':'Proof / attachments'}</strong>${esc(d.proofNote||'')}${fileHtml?`<div class="proof-files">${fileHtml}</div>`:''}</div>`:''}
+    </div>
+    ${editor}
+    <div class="panel"><h3>Documents</h3><div class="docs">${DOCUMENT_TYPES.map(dt=>`<div class="doc"><div class="name">${dt.name}</div><div class="meta">Document vault</div>${isAdmin?'<span style="font-size:11px;color:var(--ink-soft);">Use case attachments / access rules</span>':'<button class="act" data-doc="'+dt.id+'">Upload / replace</button>'}</div>`).join('')}</div></div>
+    <div class="panel"><h3>Questions on this stage</h3>
+      <div class="thread">${msgs.map(m=>`<div class="msg ${m.from}">${esc(m.text)}<span class="meta">${m.from==='staff'?'Coordinator':'Client'} · ${tsLabel(m.createdAt)}</span></div>`).join('')||'<div style="font-size:13px;color:var(--ink-soft);">No messages yet on this stage.</div>'}</div>
+      ${isAdmin?`<div class="canned">${CANNED_RESPONSES.map((c,i)=>`<span data-canned="${i}">+ ${c.tag}</span>`).join('')}</div>`:''}
+      <div class="composer"><textarea id="msgBox" placeholder="${isAdmin?'Reply to the client…':'Ask a question about this stage…'}"></textarea><button class="act primary" id="sendMsg">Send</button></div>
+    </div>`;
+
+  document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>handleAction(b.dataset.action,stage.id));
+  document.querySelectorAll('[data-canned]').forEach(e=>e.onclick=()=>{document.getElementById('msgBox').value=CANNED_RESPONSES[e.dataset.canned].text;});
+  document.getElementById('sendMsg').onclick=()=>sendMessage(stage.id);
+  if(!isAdmin){
+    document.querySelectorAll('[data-doc]').forEach(b=>b.onclick=()=>uploadFile('document',b.dataset.doc));
+    const ed=document.getElementById('clientEditor');
+    if(ed){
+      let timer;
+      ed.oninput=()=>{clearTimeout(timer);timer=setTimeout(()=>saveClientEdit(stage.id,ed.value),900);};
+      document.getElementById('undoEdits').onclick=()=>saveClientEdit(stage.id,d.baselineText||'');
+    }
   }
 }
-function addMessage(sid, text) {
-  return CC('messages').add({ uid: me.uid, from: role === 'admin' ? 'staff' : 'client', text, stageId: sid, ts: TS() });
+
+function highlightChanges(base,edited){
+  if(base===edited)return esc(edited);
+  // Lightweight character diff suitable for a review view; history retains exact versions.
+  let prefix=0; while(prefix<base.length&&prefix<edited.length&&base[prefix]===edited[prefix])prefix++;
+  let suffix=0; while(suffix<base.length-prefix&&suffix<edited.length-prefix&&base[base.length-1-suffix]===edited[edited.length-1-suffix])suffix++;
+  return esc(base.slice(0,prefix))+
+    `<del style="color:var(--danger);background:rgba(162,59,51,.08);">${esc(base.slice(prefix,base.length-suffix))}</del>`+
+    `<ins style="color:var(--green);background:var(--green-soft);text-decoration:none;">${esc(edited.slice(prefix,edited.length-suffix))}</ins>`+
+    esc(base.slice(base.length-suffix));
 }
-async function sendMessage(sid) {
-  const text = val('msgBox').trim(); if (!text) return;
-  try {
-    const ref = await addMessage(sid, text); $('msgBox').value = '';
-    if (role === 'admin') pushUndo(() => ref.delete());
-  } catch (e) { toast(e.message); }
+
+async function toggleFlag(key){
+  if(currentView!=='admin')return;
+  const flags={...(currentCase.flags||{})};flags[key]=!flags[key];
+  await updateDoc(doc(db,'cases',currentCase.id),{flags,updatedAt:serverTimestamp()});
 }
+async function handleAction(action,stageId){
+  const ref=doc(db,'cases',currentCase.id);const d=currentCase.stages[stageId];
+  if(action==='progress')return updateStage(stageId,{status:'in_progress'});
+  if(action==='done')return openAttachModal(stageId);
+  if(action==='send')return openSendModal(stageId);
+  if(action==='editor')return updateStage(stageId,{editingLocked:!d.editingLocked});
+  if(action==='history')return showHistory(stageId);
+  if(action==='approve')return confirmAction('Approve this stage?',async()=>{await updateStage(stageId,{approved:true,status:'done'});await sendMessage(stageId,'client','Approved — looks good, please proceed to the next step.');});
+  if(action==='changes')return openRequestModal(stageId);
+}
+async function updateStage(stageId,patch){
+  const ref=doc(db,'cases',currentCase.id);const old=currentCase.stages[stageId]||{};
+  await addDoc(collection(ref,'history'),{stageId,action:'stage_update',before:old,after:{...old,...patch},actorUid:userProfile.uid,createdAt:serverTimestamp()});
+  await updateDoc(ref,{[`stages.${stageId}`]:{...old,...patch,updatedAt:serverTimestamp()},updatedAt:serverTimestamp()});
+}
+async function sendMessage(stageId,from=(currentView==='admin'?'staff':'client'),text=null){
+  const box=document.getElementById('msgBox');text=(text??box?.value??'').trim();if(!text)return;
+  await addDoc(collection(db,'cases',currentCase.id,'messages'),{stageId,from,text,actorUid:userProfile.uid,createdAt:serverTimestamp()});
+  if(box)box.value='';
+}
+async function saveClientEdit(stageId,text){
+  const d=currentCase.stages[stageId];if(!d||d.editingLocked)return;
+  await addDoc(collection(db,'cases',currentCase.id,'history'),{stageId,action:'client_edit',before:d.clientText||d.baselineText||'',after:text,actorUid:userProfile.uid,createdAt:serverTimestamp()});
+  await updateStage(stageId,{clientText:text,clientEdited:text!==(d.baselineText||'')});
+}
+
+function openModal(html){document.getElementById('modalBox').innerHTML=html;document.getElementById('modalBackdrop').classList.add('open');}
+function closeModal(){document.getElementById('modalBackdrop').classList.remove('open');}
+function confirmAction(msg,yes){openModal(`<h4>Please confirm</h4><p>${esc(msg)}</p><div class="btnrow" style="margin-top:14px;"><button class="act" id="no">Cancel</button><button class="act primary" id="yes">Confirm</button></div>`);document.getElementById('no').onclick=closeModal;document.getElementById('yes').onclick=async()=>{closeModal();await yes();};}
+
+function openRequestModal(stageId){
+  openModal(`<h4>Request changes</h4><p>Tell your coordinator what needs to change.</p><textarea id="rcText" style="min-height:80px;" placeholder="e.g. Please correct the survey number in the schedule."></textarea><div class="btnrow"><button class="act" id="rcNo">Cancel</button><button class="act request" id="rcYes">Send request</button></div>`);
+  document.getElementById('rcNo').onclick=closeModal;document.getElementById('rcYes').onclick=async()=>{const t=document.getElementById('rcText').value.trim();if(!t)return;closeModal();await updateStage(stageId,{status:'in_progress'});await sendMessage(stageId,'client','Requesting changes: '+t);};
+}
+function openSendModal(stageId){
+  const d=currentCase.stages[stageId];
+  openModal(`<h4>${d.status==='waiting_client'?'Resend revised draft':'Send draft for review'}</h4><p>Enter the draft text below. This becomes the baseline for the client editor.</p><textarea id="draftText" style="min-height:260px;" placeholder="Paste the draft text here…">${esc(d.baselineText||d.clientText||'')}</textarea><div class="btnrow"><button class="act" id="dsNo">Cancel</button><button class="act primary" id="dsYes">Send to client</button></div>`);
+  document.getElementById('dsNo').onclick=closeModal;document.getElementById('dsYes').onclick=async()=>{const text=document.getElementById('draftText').value.trim();if(!text)return;closeModal();await addDoc(collection(db,'cases',currentCase.id,'history'),{stageId,action:'baseline_publish',before:d.baselineText||'',after:text,actorUid:userProfile.uid,createdAt:serverTimestamp()});await updateStage(stageId,{baselineText:text,clientText:text,clientEdited:false,status:'waiting_client',editingLocked:false});await sendMessage(stageId,'staff','A draft has been sent for your review.');};
+}
+function openAttachModal(stageId){
+  openModal(`<h4>Mark stage as done</h4><p>Add a proof note. File upload is handled through the Firestore chunk uploader below.</p><textarea id="proofText" style="min-height:80px;"></textarea><input type="file" id="proofFile" accept="application/pdf,image/*"><div class="btnrow"><button class="act" id="pfNo">Cancel</button><button class="act primary" id="pfYes">Mark done</button></div>`);
+  document.getElementById('pfNo').onclick=closeModal;document.getElementById('pfYes').onclick=async()=>{const note=document.getElementById('proofText').value.trim();const f=document.getElementById('proofFile').files[0];closeModal();if(f)await uploadFile('stage',stageId,f);await updateStage(stageId,{status:'done',proofNote:note||'Marked done.'});};
+}
+function showHistory(stageId){
+  const q=query(collection(db,'cases',currentCase.id,'history'),where('stageId','==',stageId),orderBy('createdAt','desc'),limit(20));
+  getDocs(q).then(s=>openModal(`<h4>History</h4>${s.docs.map(d=>{const x=d.data();return `<div style="padding:10px 0;border-bottom:1px solid var(--line);font-size:12px;"><strong>${esc(x.action)}</strong><div>${tsLabel(x.createdAt)}</div></div>`}).join('')||'<p>No history yet.</p>'}<div class="btnrow" style="margin-top:14px;"><button class="act" id="histClose">Close</button></div>`)).then(()=>document.getElementById('histClose').onclick=closeModal);
+}
+
+/*
+ * Firestore chunked file storage.
+ * Limits each file to 3 MB. Each chunk is kept in:
+ * cases/{caseId}/files/{fileId}/chunks/{chunkId}
+ */
+async function uploadFile(kind,refId,file=null){
+  if(!file){
+    const input=document.createElement('input');input.type='file';input.accept='application/pdf,image/*';
+    input.onchange=()=>{if(input.files[0])uploadFile(kind,refId,input.files[0]);};input.click();return;
+  }
+  if(file.size>3*1024*1024){notify('File is larger than the 3 MB limit.',true);return;}
+  const fileRef=doc(collection(db,'cases',currentCase.id,'files'));
+  await setDoc(fileRef,{name:file.name,type:file.type,size:file.size,kind,refId,ownerUid:userProfile.uid,createdAt:serverTimestamp()});
+  const bytes=new Uint8Array(await file.arrayBuffer());const chunkSize=700000;
+  for(let i=0;i<bytes.length;i+=chunkSize){
+    const b=bytes.slice(i,i+chunkSize);
+    let binary='';for(const x of b)binary+=String.fromCharCode(x);
+    const data=btoa(binary);
+    await setDoc(doc(fileRef,'chunks',String(Math.floor(i/chunkSize)).padStart(6,'0')),{data,createdAt:serverTimestamp()});
+  }
+  notify('File uploaded.');
+}
+
+function renderAdmin(){
+  document.body.innerHTML=`<div class="topbar"><div class="brand"><span class="mark">📜 Casefile</span><span class="tag">Admin console</span></div><div class="topright"><button class="act" id="adminLogout">Sign out</button></div></div><div class="main" style="max-width:1100px;margin:auto;"><div class="panel"><h3>Client approvals</h3><div id="pendingClients">Loading…</div></div><div class="panel"><h3>Cases</h3><div id="caseList">Loading…</div></div></div><div id="toast" style="display:none;position:fixed;right:18px;bottom:18px;padding:11px 15px;border-radius:8px;background:var(--ink);color:var(--paper);font-size:12px;z-index:100;"></div>`;
+  document.getElementById('adminLogout').onclick=()=>signOut(auth);
+  loadAdminLists();
+}
+async function loadAdminLists(){
+  const pending=await getDocs(query(collection(db,'users'),where('status','==','pending')));
+  document.getElementById('pendingClients').innerHTML=pending.empty?'<p class="explainer">No pending clients.</p>':pending.docs.map(d=>{const u=d.data();return `<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:12px 0;"><div><strong>${esc(u.name||u.email)}</strong><div style="font-size:12px;color:var(--ink-soft);">${esc(u.email)}</div></div><div class="btnrow"><button class="act approve" data-approve="${d.id}">Approve</button><button class="act request" data-reject="${d.id}">Reject</button></div></div>`}).join('');
+  document.querySelectorAll('[data-approve]').forEach(b=>b.onclick=()=>approveClient(b.dataset.approve));
+  document.querySelectorAll('[data-reject]').forEach(b=>b.onclick=()=>rejectClient(b.dataset.reject));
+  const cases=await getDocs(query(collection(db,'cases'),orderBy('updatedAt','desc'),limit(50)));
+  document.getElementById('caseList').innerHTML=cases.empty?'<p class="explainer">No cases.</p>':cases.docs.map(d=>{const c=d.data();return `<div class="doc" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div><strong>${esc(c.property||'Case')}</strong><div class="meta">${esc(c.clientName||'')} · ${esc(c.address||'')}</div></div><button class="act" data-case="${d.id}">Open</button></div>`}).join('');
+  document.querySelectorAll('[data-case]').forEach(b=>b.onclick=()=>openAdminCase(b.dataset.case));
+}
+async function approveClient(uid){
+  const u=(await getDoc(doc(db,'users',uid))).data();if(!u)return;
+  const caseId=await createCaseForClient({uid,name:u.name,email:u.email});
+  await updateDoc(doc(db,'users',uid),{status:'approved',caseId,approvedAt:serverTimestamp(),approvedBy:userProfile.uid});
+  notify('Client approved.');loadAdminLists();
+}
+async function rejectClient(uid){await updateDoc(doc(db,'users',uid),{status:'rejected',rejectedAt:serverTimestamp(),rejectedBy:userProfile.uid});notify('Client rejected.');loadAdminLists();}
+async function openAdminCase(caseId){
+  const s=await getDoc(doc(db,'cases',caseId));if(!s.exists())return;
+  currentCase={id:s.id,...s.data()};currentView='admin';selectedStage=currentCase.selectedStage||'agreement';subscribeMessages();renderApp();
+}
+
+onAuthStateChanged(auth,async(user)=>{
+  if(!user){userProfile=null;loginScreen();return;}
+  try{
+    userProfile=await loadProfile(user.uid);
+    if(!userProfile){await signOut(auth);loginScreen();notify('Account is not authorised.',true);return;}
+    if(userProfile.role==='admin'){await subscribeAdmin();return;}
+    if(userProfile.status==='pending'){await signOut(auth);loginScreen();notify('Your account is awaiting approval.');return;}
+    if(userProfile.status==='rejected'){await signOut(auth);loginScreen();notify('Your account was rejected.',true);return;}
+    if(userProfile.status==='revoked'){await signOut(auth);showRevoked();return;}
+    await subscribeClientCase();
+  }catch(e){console.error(e);notify(e.message||'Could not load your account.',true);}
+});
+
+window.addEventListener('beforeunload',()=>{if(unsubscribeCase)unsubscribeCase();if(unsubscribeMessages)unsubscribeMessages();});
 </script>
 </body>
 </html>
