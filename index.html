@@ -195,27 +195,35 @@ const FIREBASE_CONFIG = {
   appId: "1:526527586653:web:bf06a40393548e7fcc48b4"
 };
 
-const app = initializeApp(FIREBASE_CONFIG);
-const auth = getAuth(app);
-const db = getFirestore(app);
+let app, auth, db, firebaseReady = false;
+const CONFIG_IS_PLACEHOLDER = Object.values(FIREBASE_CONFIG).some(v => String(v).includes('PASTE_'));
+try {
+  app = initializeApp(FIREBASE_CONFIG);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  firebaseReady = !CONFIG_IS_PLACEHOLDER;
+} catch (e) {
+  console.error('Firebase init failed:', e);
+}
+let signingUp = false;
 
 const STAGE_TEMPLATE = [
   { id:'agreement', name:'Sale Agreement drafted', explainer:'The Sale Agreement is prepared on 0.5% stamp paper. Please read it carefully — you can request changes to consideration amount, schedule, or party details before we move on.', approval:true, cond:null },
-  { id:'agreement_stamp', name:'Stamp duty on agreement paid', explainer:'Stamp duty (0.5% of consideration) is paid on the e-stamp paper the agreement is printed on. This amount is later adjusted against the Sale Deed\\'s stamp duty.', approval:false, cond:null },
+  { id:'agreement_stamp', name:'Stamp duty on agreement paid', explainer:'Stamp duty (0.5% of consideration) is paid on the e-stamp paper the agreement is printed on. This amount is later adjusted against the Sale Deed\'s stamp duty.', approval:false, cond:null },
   { id:'poa', name:'Power of Attorney adjudicated', explainer:'Since one party is acting through a POA, it needs to be adjudicated and verified before it can be used at registration.', approval:false, cond:'hasPOA' },
   { id:'deed_draft', name:'Sale Deed drafted', explainer:'This is the main legal document that transfers ownership. Please review it fully — once you approve, we move straight to the Kaveri portal.', approval:true, cond:null },
-  { id:'ekhata', name:'e-Khata verified', explainer:'e-Khata confirms the property is recorded in the buyer\\'s name for tax purposes after registration. Upload the confirmation once you have it, and we move straight to the next step.', approval:false, cond:null },
-  { id:'kaveri', name:'Uploaded to Kaveri portal', explainer:'Karnataka\\'s official government system for property registration. Both your and the other party\\'s Aadhaar numbers must be linked to an active mobile number, since OTP verification happens here — this is a common hold-up, so please double check this in advance.', approval:false, cond:null },
+  { id:'ekhata', name:'e-Khata verified', explainer:'e-Khata confirms the property is recorded in the buyer\'s name for tax purposes after registration. Upload the confirmation once you have it, and we move straight to the next step.', approval:false, cond:null },
+  { id:'kaveri', name:'Uploaded to Kaveri portal', explainer:'Karnataka\'s official government system for property registration. Both your and the other party\'s Aadhaar numbers must be linked to an active mobile number, since OTP verification happens here — this is a common hold-up, so please double check this in advance.', approval:false, cond:null },
   { id:'stamp_payment', name:'Stamp duty & registration fee paid', explainer:'The government fee (stamp duty + registration fee) calculated by the Kaveri portal is paid online. This is separate from the earlier agreement stamp duty.', approval:false, cond:null },
-  { id:'slot', name:'Sub-Registrar slot booked', explainer:'We book your preferred date and time at the Sub-Registrar\\'s office for final registration. Screenshot of the booking and the payment challan are attached here once confirmed.', approval:false, cond:null },
-  { id:'registration', name:'Registration day', explainer:'Both parties attend in person for thumb impression, photo and OTP authentication. We\\'ll attach a photo of the completed deed here once it\\'s done.', approval:true, cond:null },
+  { id:'slot', name:'Sub-Registrar slot booked', explainer:'We book your preferred date and time at the Sub-Registrar\'s office for final registration. Screenshot of the booking and the payment challan are attached here once confirmed.', approval:false, cond:null },
+  { id:'registration', name:'Registration day', explainer:'Both parties attend in person for thumb impression, photo and OTP authentication. We\'ll attach a photo of the completed deed here once it\'s done.', approval:true, cond:null },
   { id:'handover', name:'Loan handover to seller', explainer:'Since this purchase involves a home loan, the bank collects the registered deed, e-Khata and Encumbrance Certificate before releasing final payment to the seller.', approval:false, cond:'hasLoan' }
 ];
 
 const CANNED_RESPONSES = [
-  {tag:'TDS',text:'For properties above ₹50 lakh, 1% TDS must be deducted by the buyer and deposited via Form 26QB before registration. We\\'ll share the challan copy once filed.'},
-  {tag:'Stamp Duty',text:'Stamp duty in Karnataka is 5% of the property value or guidance value, whichever is higher, plus 1% registration fee. There\\'s no separate concession for first-time buyers currently.'},
-  {tag:'Aadhaar OTP',text:'Both parties\\' Aadhaar numbers need to be linked to a mobile number that can receive OTPs, since the Kaveri portal authenticates identity this way. Please check this is active before our slot.'},
+  {tag:'TDS',text:'For properties above ₹50 lakh, 1% TDS must be deducted by the buyer and deposited via Form 26QB before registration. We\'ll share the challan copy once filed.'},
+  {tag:'Stamp Duty',text:'Stamp duty in Karnataka is 5% of the property value or guidance value, whichever is higher, plus 1% registration fee. There\'s no separate concession for first-time buyers currently.'},
+  {tag:'Aadhaar OTP',text:'Both parties\' Aadhaar numbers need to be linked to a mobile number that can receive OTPs, since the Kaveri portal authenticates identity this way. Please check this is active before our slot.'},
   {tag:'e-Khata',text:'e-Khata is the digital property record used for tax and ownership verification — registration cannot proceed without it, so we always confirm it early in the process.'}
 ];
 
@@ -250,6 +258,7 @@ function notify(message, error=false){
   el.textContent=message;
   el.style.display='block';
   el.dataset.error=error?'1':'0';
+  el.classList.toggle('toast-error',!!error);
   setTimeout(()=>el.style.display='none',3500);
 }
 
@@ -272,7 +281,7 @@ function loginScreen(){
           <button class="act primary" id="authSubmit">Sign in</button>
           <button class="act" id="authToggle">Create client account</button>
         </div>
-        <p id="authStatus" style="font-size:12px;color:var(--ink-soft);margin-top:12px;"></p>
+        <p id="authStatus" style="font-size:12px;color:var(--ink-soft);margin-top:12px;">${firebaseReady?'':'⚠ Firebase is not configured yet. Replace the PASTE_… values in FIREBASE_CONFIG (top of the script) to enable sign-in.'}</p>
       </div>
     </div>
     <div id="toast" style="display:none;position:fixed;right:18px;bottom:18px;padding:11px 15px;border-radius:8px;background:var(--ink);color:var(--paper);font-size:12px;z-index:100;"></div>`;
@@ -295,13 +304,14 @@ function bindAuthUI(){
     submit.textContent=signup?'Create account':'Sign in';
     toggle.style.display=admin?'none':'inline-block';
     toggle.textContent=signup?'Back to login':'Create client account';
-    status.textContent='';
+    if(firebaseReady) status.textContent='';
   }
   clientBtn.onclick=()=>{admin=false;signup=false;refresh();};
   adminBtn.onclick=()=>{admin=true;signup=false;refresh();};
   toggle.onclick=()=>{signup=!signup;refresh();};
 
   submit.onclick=async()=>{
+    if(!firebaseReady){status.textContent='Firebase is not configured. Add your project config in FIREBASE_CONFIG first.';return;}
     status.textContent='Working…'; submit.disabled=true;
     try{
       const email=document.getElementById('authEmail').value.trim();
@@ -309,18 +319,20 @@ function bindAuthUI(){
       if(!email||!pw) throw new Error('Enter your email and password.');
       if(signup){
         const fullName=name.value.trim(); if(!fullName) throw new Error('Enter your full name.');
+        signingUp=true;
         const cred=await createUserWithEmailAndPassword(auth,email,pw);
         await setDoc(doc(db,'users',cred.user.uid),{
           email, name:fullName, role:'client', status:'pending',
           createdAt:serverTimestamp()
         });
         await signOut(auth);
-        status.textContent='Account created. An administrator must approve it before you can sign in.';
+        signingUp=false;
         signup=false; refresh();
+        status.textContent='Account created. An administrator must approve it before you can sign in.';
         return;
       }
       await signInWithEmailAndPassword(auth,email,pw);
-    }catch(e){status.textContent=e.message||'Authentication failed.'; }
+    }catch(e){signingUp=false;status.textContent=e.message||'Authentication failed.'; }
     finally{submit.disabled=false;}
   };
   refresh();
@@ -621,7 +633,11 @@ async function openAdminCase(caseId){
   currentCase={id:s.id,...s.data()};currentView='admin';selectedStage=currentCase.selectedStage||'agreement';subscribeMessages();renderApp();
 }
 
-onAuthStateChanged(auth,async(user)=>{
+// Always show the login screen first so the page is never blank.
+loginScreen();
+
+if(firebaseReady) onAuthStateChanged(auth,async(user)=>{
+  if(signingUp) return;
   if(!user){userProfile=null;loginScreen();return;}
   try{
     userProfile=await loadProfile(user.uid);
@@ -631,7 +647,7 @@ onAuthStateChanged(auth,async(user)=>{
     if(userProfile.status==='rejected'){await signOut(auth);loginScreen();notify('Your account was rejected.',true);return;}
     if(userProfile.status==='revoked'){await signOut(auth);showRevoked();return;}
     await subscribeClientCase();
-  }catch(e){console.error(e);notify(e.message||'Could not load your account.',true);}
+  }catch(e){console.error(e);await signOut(auth).catch(()=>{});loginScreen();notify(e.message||'Could not load your account.',true);}
 });
 
 window.addEventListener('beforeunload',()=>{if(unsubscribeCase)unsubscribeCase();if(unsubscribeMessages)unsubscribeMessages();});
