@@ -161,9 +161,21 @@
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
 .toast-error { background: var(--danger) !important; }
+
+  .rte{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--paper)}
+  .rte-bar{display:flex;flex-wrap:wrap;gap:4px;padding:8px;border-bottom:1px solid var(--line);background:var(--paper-raised)}
+  .rte-bar button{min-width:30px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);cursor:pointer;font-size:12px}
+  .rte-bar button:disabled{opacity:.4;cursor:default}
+  .rte-body{min-height:320px;max-height:70vh;overflow:auto;padding:36px 44px;background:#fff;color:#111;font:15px/1.6 Georgia,serif;outline:none}
+  .rte-body[contenteditable=false]{opacity:.8}
+  .rte-body table{border-collapse:collapse}.rte-body td,.rte-body th{border:1px solid #999;padding:4px 8px}
+  .modal:has(.rte),.modal:has(iframe){width:min(860px,94vw);max-width:none}
+  .modal .rte-body{min-height:220px;max-height:45vh}
 </style>
 </head>
 <body>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
 <script type="module">
 /*
  * CASEFILE — Firebase edition
@@ -388,7 +400,7 @@ async function subscribeClientCase(){
   currentCase=c; currentView='client'; selectedStage=c.selectedStage||'agreement';
   unsubscribeCase=onSnapshot(doc(db,'cases',c.id),snap=>{
     if(!snap.exists()){showWaiting();return;}
-    currentCase={id:snap.id,...snap.data()}; selectedStage=currentCase.selectedStage||selectedStage; renderApp();
+    currentCase={...snap.data(),id:snap.id,_messages:currentCase?._messages,_files:currentCase?._files}; selectedStage=currentCase.selectedStage||selectedStage; renderApp();
   },err=>notify(err.message,true));
   subscribeMessages();
 }
@@ -399,7 +411,9 @@ function subscribeMessages(){
   const q=query(collection(db,'cases',currentCase.id,'messages'),orderBy('createdAt','asc'));
   unsubscribeMessages=onSnapshot(q,s=>{
     currentCase._messages=s.docs.map(d=>({id:d.id,...d.data()})); renderApp();
-  });
+  },err=>notify(err.message,true));
+  if(window._unsubFiles)window._unsubFiles();
+  window._unsubFiles=onSnapshot(collection(db,'cases',currentCase.id,'files'),s=>{currentCase._files=s.docs.map(d=>({id:d.id,...d.data()}));renderApp();},err=>notify(err.message,true));
 }
 
 async function subscribeAdmin(){
@@ -421,7 +435,42 @@ function showRevoked(){
   document.getElementById('revLogout').onclick=()=>signOut(auth);
 }
 
+/* ---------- Word-style editor helpers ---------- */
+function clean(html){
+  const d=new DOMParser().parseFromString(html||'','text/html');
+  d.querySelectorAll('script,style,iframe,object,embed,link,meta,img,form,base').forEach(n=>n.remove());
+  d.body.querySelectorAll('*').forEach(n=>[...n.attributes].forEach(a=>{const k=a.name.toLowerCase();if(k.startsWith('on')||(k==='style'&&/expression|url\(/i.test(a.value))||(k==='href'&&/^\s*javascript:/i.test(a.value)))n.removeAttribute(a.name);}));
+  return d.body.innerHTML;
+}
+function htmlText(h){const d=document.createElement('div');d.innerHTML=clean(h);return d.textContent||'';}
+const slim=o=>{const {baselineHtml,clientHtml,baselineText,clientText,...r}=o||{};return r;};
+function rteHtml(id,html,locked){
+  const b=(c,l,v)=>`<button type="button" data-cmd="${c}" ${v?`data-val="${v}"`:''} ${locked?'disabled':''}>${l}</button>`;
+  return `<div class="rte"><div class="rte-bar">${b('undo','↶')}${b('redo','↷')}${b('bold','<b>B</b>')}${b('italic','<i>I</i>')}${b('underline','<u>U</u>')}${b('formatBlock','H1','h1')}${b('formatBlock','H2','h2')}${b('formatBlock','Text','p')}${b('insertUnorderedList','• List')}${b('insertOrderedList','1. List')}${b('justifyLeft','⇤')}${b('justifyCenter','↔')}${b('justifyRight','⇥')}${b('justifyFull','☰')}</div><div class="rte-body" id="${id}" contenteditable="${locked?'false':'true'}">${clean(html)}</div></div>`;
+}
+function wireRte(root,onInput){
+  root.querySelectorAll('.rte-bar button').forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=()=>{document.execCommand(b.dataset.cmd,false,b.dataset.val||null);onInput&&onInput();};});
+  const body=root.querySelector('.rte-body');body.oninput=()=>onInput&&onInput();
+  body.onpaste=e=>{e.preventDefault();const h=e.clipboardData.getData('text/html'),t=e.clipboardData.getData('text/plain');document.execCommand('insertHTML',false,h?clean(h):esc(t).replace(/\n/g,'<br>'));};
+}
+function downloadDocx(html,name){
+  const blob=window.htmlDocx.asBlob('<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Georgia,serif">'+clean(html)+'</body></html>');
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(name||'document')+'.docx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+async function openFile(fid){
+  const f=(currentCase._files||[]).find(x=>x.id===fid);if(!f)return;
+  try{
+    const sn=await getDocs(collection(db,'cases',currentCase.id,'files',fid,'chunks'));
+    const parts=sn.docs.sort((a,b)=>a.id<b.id?-1:1).map(d=>Uint8Array.from(atob(d.data().data),c=>c.charCodeAt(0)));
+    const url=URL.createObjectURL(new Blob(parts,{type:f.type||'application/octet-stream'}));
+    const pv=/^image\//.test(f.type)?`<img src="${url}" style="max-width:100%;border-radius:6px;">`:f.type==='application/pdf'?`<iframe src="${url}" style="width:100%;height:60vh;border:0;background:#fff"></iframe>`:'<p>No preview for this file type.</p>';
+    openModal(`<h4>${esc(f.name)}</h4>${pv}<div class="btnrow" style="margin-top:14px;"><a class="act primary" href="${url}" download="${esc(f.name)}">Download</a><button class="act" id="fvClose">Close</button></div>`);
+    document.getElementById('fvClose').onclick=closeModal;
+  }catch(e){notify(e.message,true);}
+}
+
 function renderApp(){
+  if(document.activeElement?.closest?.('.rte-body')||document.querySelector('#modalBackdrop.open'))return;
   if(!currentCase)return;
   const isAdmin=currentView==='admin';
   document.body.innerHTML=`
@@ -482,14 +531,18 @@ function renderMain(){
     actions=`<div class="btnrow"><button class="act approve" data-action="approve">Approve, looks good</button><button class="act request" data-action="changes">Request changes</button></div>`;
   } else actions=`<div class="btnrow"><button class="act" disabled>${d.status==='done'?'Completed':'Nothing needed from you right now'}</button></div>`;
 
-  const fileHtml=(d.files||[]).map((f,i)=>`<button class="act" style="font-size:11px;" data-file-index="${i}">📎 ${esc(f.name||'attachment')}</button>`).join(' ');
-  const editor = stage.approval && d.baselineText ? `
+  const allFiles=currentCase._files||[];const fbtn=l=>l.map(f=>`<button class="act" style="font-size:11px;" data-fileview="${f.id}">📎 ${esc(f.name||'attachment')}</button>`).join(' ');
+  const fileHtml=fbtn(allFiles.filter(f=>f.kind==='stage'&&f.refId===stage.id));
+  const rich=!!d.baselineHtml;
+  const editor = stage.approval && (d.baselineText||rich) ? `
     <div class="panel" style="margin-top:20px;">
       <h3>Document editor</h3>
-      <p class="explainer">${isAdmin?'Baseline and client edits are stored as versions.':'Edit the document only while your coordinator has unlocked it. Your changes autosave after you pause typing.'}</p>
-      ${isAdmin && d.clientText ? `<div style="padding:12px;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;font-size:13px;">${highlightChanges(d.baselineText,d.clientText)}</div>`:''}
-      ${!isAdmin ? `<textarea id="clientEditor" ${d.editingLocked?'disabled':''} style="width:100%;min-height:260px;font-family:var(--sans);font-size:13px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);">${esc(d.clientText||d.baselineText)}</textarea>
-      <div class="btnrow" style="margin-top:10px;"><button class="act" id="undoEdits">Undo my edits</button></div>`:''}
+      <p class="explainer">${isAdmin?'The client edits a copy of your draft. Their changes are saved as versions.':'Edit the document only while your coordinator has unlocked it. Your changes autosave after you pause typing.'}</p>
+      ${isAdmin && d.clientText ? `<div style="padding:12px;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;font-size:13px;margin-bottom:12px;">${highlightChanges(d.baselineText,d.clientText)}</div>`:''}
+      ${rich ? `<div id="rteWrap">${rteHtml('richEditor',d.clientHtml||d.baselineHtml,isAdmin||!!d.editingLocked)}</div>
+        <div class="btnrow" style="margin-top:10px;">${isAdmin?'':'<button class="act" id="undoEdits">Undo my edits</button>'}<button class="act" id="dlClient">Download ${isAdmin?'client version ':''}(.docx)</button>${isAdmin?'<button class="act" id="dlBase">Download original (.docx)</button>':''}</div>`
+      : (!isAdmin ? `<textarea id="clientEditor" ${d.editingLocked?'disabled':''} style="width:100%;min-height:260px;font-family:var(--sans);font-size:13px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);">${esc(d.clientText||d.baselineText)}</textarea>
+      <div class="btnrow" style="margin-top:10px;"><button class="act" id="undoEdits">Undo my edits</button></div>`:'')}
     </div>` : '';
 
   document.getElementById('mainPanel').innerHTML=`
@@ -499,7 +552,7 @@ function renderMain(){
       ${(d.proofNote||fileHtml)?`<div class="proofbox"><strong>${d.status==='waiting_client'?'Draft attached for your review':'Proof / attachments'}</strong>${esc(d.proofNote||'')}${fileHtml?`<div class="proof-files">${fileHtml}</div>`:''}</div>`:''}
     </div>
     ${editor}
-    <div class="panel"><h3>Documents</h3><div class="docs">${DOCUMENT_TYPES.map(dt=>`<div class="doc"><div class="name">${dt.name}</div><div class="meta">Document vault</div>${isAdmin?'<span style="font-size:11px;color:var(--ink-soft);">Use case attachments / access rules</span>':'<button class="act" data-doc="'+dt.id+'">Upload / replace</button>'}</div>`).join('')}</div></div>
+    <div class="panel"><h3>Documents</h3><div class="docs">${DOCUMENT_TYPES.map(dt=>`<div class="doc"><div class="name">${dt.name}</div><div class="meta">Document vault</div>${fbtn(allFiles.filter(f=>f.kind==='document'&&f.refId===dt.id))||'<span style="font-size:11px;color:var(--ink-soft);">Nothing uploaded yet</span>'}${isAdmin?'':'<button class="act" data-doc="'+dt.id+'">Upload / replace</button>'}</div>`).join('')}</div></div>
     <div class="panel"><h3>Questions on this stage</h3>
       <div class="thread">${msgs.map(m=>`<div class="msg ${m.from}">${esc(m.text)}<span class="meta">${m.from==='staff'?'Coordinator':'Client'} · ${tsLabel(m.createdAt)}</span></div>`).join('')||'<div style="font-size:13px;color:var(--ink-soft);">No messages yet on this stage.</div>'}</div>
       ${isAdmin?`<div class="canned">${CANNED_RESPONSES.map((c,i)=>`<span data-canned="${i}">+ ${c.tag}</span>`).join('')}</div>`:''}
@@ -509,6 +562,12 @@ function renderMain(){
   document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>handleAction(b.dataset.action,stage.id));
   document.querySelectorAll('[data-canned]').forEach(e=>e.onclick=()=>{document.getElementById('msgBox').value=CANNED_RESPONSES[e.dataset.canned].text;});
   document.getElementById('sendMsg').onclick=()=>sendMessage(stage.id);
+  document.querySelectorAll('[data-fileview]').forEach(b=>b.onclick=()=>openFile(b.dataset.fileview));
+  const dlc=document.getElementById('dlClient');if(dlc)dlc.onclick=()=>downloadDocx(d.clientHtml||d.baselineHtml,'client-version');
+  const dlb=document.getElementById('dlBase');if(dlb)dlb.onclick=()=>downloadDocx(d.baselineHtml,'original');
+  const rw=document.getElementById('rteWrap');
+  if(rw&&!isAdmin){let t;const body=rw.querySelector('.rte-body');wireRte(rw,()=>{clearTimeout(t);t=setTimeout(()=>saveClientEdit(stage.id,htmlText(body.innerHTML),body.innerHTML),900);});
+    document.getElementById('undoEdits').onclick=()=>saveClientEdit(stage.id,d.baselineText||'',d.baselineHtml);}
   if(!isAdmin){
     document.querySelectorAll('[data-doc]').forEach(b=>b.onclick=()=>uploadFile('document',b.dataset.doc));
     const ed=document.getElementById('clientEditor');
@@ -548,7 +607,7 @@ async function handleAction(action,stageId){
 }
 async function updateStage(stageId,patch){
   const ref=doc(db,'cases',currentCase.id);const old=currentCase.stages[stageId]||{};
-  await addDoc(collection(ref,'history'),{stageId,action:'stage_update',before:old,after:{...old,...patch},actorUid:userProfile.uid,createdAt:serverTimestamp()});
+  await addDoc(collection(ref,'history'),{stageId,action:'stage_update',before:slim(old),after:slim({...old,...patch}),actorUid:userProfile.uid,createdAt:serverTimestamp()});
   await updateDoc(ref,{[`stages.${stageId}`]:{...old,...patch,updatedAt:serverTimestamp()},updatedAt:serverTimestamp()});
 }
 async function sendMessage(stageId,from=(currentView==='admin'?'staff':'client'),text=null){
@@ -556,14 +615,15 @@ async function sendMessage(stageId,from=(currentView==='admin'?'staff':'client')
   await addDoc(collection(db,'cases',currentCase.id,'messages'),{stageId,from,text,actorUid:userProfile.uid,createdAt:serverTimestamp()});
   if(box)box.value='';
 }
-async function saveClientEdit(stageId,text){
+async function saveClientEdit(stageId,text,html=null){
   const d=currentCase.stages[stageId];if(!d||d.editingLocked)return;
+  if(html!==null&&html.length>120000){notify('Document is too large to save (max ~120 KB).',true);return;}
   await addDoc(collection(db,'cases',currentCase.id,'history'),{stageId,action:'client_edit',before:d.clientText||d.baselineText||'',after:text,actorUid:userProfile.uid,createdAt:serverTimestamp()});
-  await updateStage(stageId,{clientText:text,clientEdited:text!==(d.baselineText||'')});
+  const patch={clientText:text,clientEdited:text!==(d.baselineText||'')};if(html!==null)patch.clientHtml=clean(html);await updateStage(stageId,patch);
 }
 
 function openModal(html){document.getElementById('modalBox').innerHTML=html;document.getElementById('modalBackdrop').classList.add('open');}
-function closeModal(){document.getElementById('modalBackdrop').classList.remove('open');}
+function closeModal(){document.getElementById('modalBackdrop').classList.remove('open');if(currentCase&&document.getElementById('mainPanel'))renderApp();}
 function confirmAction(msg,yes){openModal(`<h4>Please confirm</h4><p>${esc(msg)}</p><div class="btnrow" style="margin-top:14px;"><button class="act" id="no">Cancel</button><button class="act primary" id="yes">Confirm</button></div>`);document.getElementById('no').onclick=closeModal;document.getElementById('yes').onclick=async()=>{closeModal();await yes();};}
 
 function openRequestModal(stageId){
@@ -572,8 +632,11 @@ function openRequestModal(stageId){
 }
 function openSendModal(stageId){
   const d=currentCase.stages[stageId];
-  openModal(`<h4>${d.status==='waiting_client'?'Resend revised draft':'Send draft for review'}</h4><p>Enter the draft text below. This becomes the baseline for the client editor.</p><textarea id="draftText" style="min-height:260px;" placeholder="Paste the draft text here…">${esc(d.baselineText||d.clientText||'')}</textarea><div class="btnrow"><button class="act" id="dsNo">Cancel</button><button class="act primary" id="dsYes">Send to client</button></div>`);
-  document.getElementById('dsNo').onclick=closeModal;document.getElementById('dsYes').onclick=async()=>{const text=document.getElementById('draftText').value.trim();if(!text)return;closeModal();await addDoc(collection(db,'cases',currentCase.id,'history'),{stageId,action:'baseline_publish',before:d.baselineText||'',after:text,actorUid:userProfile.uid,createdAt:serverTimestamp()});await updateStage(stageId,{baselineText:text,clientText:text,clientEdited:false,status:'waiting_client',editingLocked:false});await sendMessage(stageId,'staff','A draft has been sent for your review.');};
+  openModal(`<h4>${d.status==='waiting_client'?'Resend revised draft':'Send draft for review'}</h4><p>Upload a Word document (.docx) or write/paste the draft below. The client gets a Word-style editor with this as the baseline. Images are not carried over.</p><input type="file" id="draftFile" accept=".docx" style="margin-bottom:10px;"><div id="draftRte">${rteHtml('draftEditor',d.baselineHtml||esc(d.baselineText||d.clientText||'').replace(/\n/g,'<br>'),false)}</div><div class="btnrow"><button class="act" id="dsNo">Cancel</button><button class="act primary" id="dsYes">Send to client</button></div>`);
+  const wrap=document.getElementById('draftRte'),body=wrap.querySelector('.rte-body');wireRte(wrap);
+  document.getElementById('draftFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const r=await window.mammoth.convertToHtml({arrayBuffer:await f.arrayBuffer()},{convertImage:window.mammoth.images.imgElement(()=>Promise.resolve({src:''}))});body.innerHTML=clean(r.value);}catch(err){notify('Could not read that .docx: '+err.message,true);}};
+  document.getElementById('dsNo').onclick=closeModal;
+  document.getElementById('dsYes').onclick=async()=>{const html=clean(body.innerHTML),text=htmlText(html).trim();if(!text)return;if(html.length>120000){notify('Document too large (max ~120 KB). Shorten or split it.',true);return;}closeModal();await addDoc(collection(db,'cases',currentCase.id,'history'),{stageId,action:'baseline_publish',before:d.baselineText||'',after:text,actorUid:userProfile.uid,createdAt:serverTimestamp()});await updateStage(stageId,{baselineHtml:html,baselineText:text,clientHtml:html,clientText:text,clientEdited:false,status:'waiting_client',editingLocked:false});await sendMessage(stageId,'staff','A draft has been sent for your review.');};
 }
 function openAttachModal(stageId){
   openModal(`<h4>Mark stage as done</h4><p>Add a proof note. File upload is handled through the Firestore chunk uploader below.</p><textarea id="proofText" style="min-height:80px;"></textarea><input type="file" id="proofFile" accept="application/pdf,image/*"><div class="btnrow"><button class="act" id="pfNo">Cancel</button><button class="act primary" id="pfYes">Mark done</button></div>`);
@@ -630,7 +693,7 @@ async function approveClient(uid){
 async function rejectClient(uid){await updateDoc(doc(db,'users',uid),{status:'rejected',rejectedAt:serverTimestamp(),rejectedBy:userProfile.uid});notify('Client rejected.');loadAdminLists();}
 async function openAdminCase(caseId){
   const s=await getDoc(doc(db,'cases',caseId));if(!s.exists())return;
-  currentCase={id:s.id,...s.data()};currentView='admin';selectedStage=currentCase.selectedStage||'agreement';subscribeMessages();renderApp();
+  currentCase={id:s.id,...s.data()};currentView='admin';selectedStage=currentCase.selectedStage||'agreement';subscribeMessages();if(unsubscribeCase)unsubscribeCase();unsubscribeCase=onSnapshot(doc(db,'cases',caseId),sn=>{if(!sn.exists())return;const p=currentCase;currentCase={...sn.data(),id:sn.id,_messages:p?._messages,_files:p?._files};renderApp();},err=>notify(err.message,true));renderApp();
 }
 
 // Always show the login screen first so the page is never blank.
