@@ -171,10 +171,19 @@
   .rte-body table{border-collapse:collapse}.rte-body td,.rte-body th{border:1px solid #999;padding:4px 8px}
   .modal:has(.rte),.modal:has(iframe){width:min(860px,94vw);max-width:none}
   .modal .rte-body{min-height:220px;max-height:45vh}
+
+  .dx-body{max-height:75vh;overflow:auto;outline:none}
+  .dx-body .docx-wrapper>section.docx{background:#fff;color:#000}
+  .chg{background:#fff176;color:#000;border-radius:2px}
+  .chg-del{background:#ffe0e0;color:#a23b33;text-decoration:line-through;border-radius:2px;text-decoration-thickness:2px}
+  .ctx{position:fixed;z-index:200;background:var(--paper-raised);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.35);padding:4px;display:flex;flex-direction:column}
+  .ctx button{background:none;border:0;color:var(--ink);padding:8px 14px;text-align:left;cursor:pointer;font-size:13px;border-radius:6px}
+  .ctx button:hover{background:var(--paper)}
 </style>
 </head>
 <body>
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.3/dist/docx-preview.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.js"></script>
 <script type="module">
 /*
@@ -436,9 +445,10 @@ function showRevoked(){
 }
 
 /* ---------- Word-style editor helpers ---------- */
-function clean(html){
+function clean(html,rich=false){
   const d=new DOMParser().parseFromString(html||'','text/html');
-  d.querySelectorAll('script,style,iframe,object,embed,link,meta,img,form,base').forEach(n=>n.remove());
+  d.querySelectorAll('script,style,iframe,object,embed,link,meta,form,base').forEach(n=>n.remove());
+  d.querySelectorAll('img').forEach(n=>{if(!rich||!/^data:image\//i.test(n.getAttribute('src')||''))n.remove();});
   d.body.querySelectorAll('*').forEach(n=>[...n.attributes].forEach(a=>{const k=a.name.toLowerCase();if(k.startsWith('on')||(k==='style'&&/expression|url\(/i.test(a.value))||(k==='href'&&/^\s*javascript:/i.test(a.value)))n.removeAttribute(a.name);}));
   return d.body.innerHTML;
 }
@@ -450,7 +460,7 @@ function rteHtml(id,html,locked){
 }
 function wireRte(root,onInput){
   root.querySelectorAll('.rte-bar button').forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=()=>{document.execCommand(b.dataset.cmd,false,b.dataset.val||null);onInput&&onInput();};});
-  const body=root.querySelector('.rte-body');body.oninput=()=>onInput&&onInput();
+  const body=root.querySelector('.rte-body,.dx-body');body.oninput=()=>onInput&&onInput();
   body.onpaste=e=>{e.preventDefault();const h=e.clipboardData.getData('text/html'),t=e.clipboardData.getData('text/plain');document.execCommand('insertHTML',false,h?clean(h):esc(t).replace(/\n/g,'<br>'));};
 }
 function downloadDocx(html,name){
@@ -469,8 +479,144 @@ async function openFile(fid){
   }catch(e){notify(e.message,true);}
 }
 
+/* ---------- Exact-format .docx (docx-preview) + inline change highlighting ---------- */
+const normText=t=>(t||'').replace(/\s+/g,' ').trim();
+const dxCache={};
+async function fileBlob(fid,type){
+  const sn=await getDocs(collection(db,'cases',currentCase.id,'files',fid,'chunks'));
+  const parts=sn.docs.sort((a,b)=>a.id<b.id?-1:1).map(d=>Uint8Array.from(atob(d.data().data),c=>c.charCodeAt(0)));
+  return new Blob(parts,{type:type||'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+}
+async function dxBlob(fid){return dxCache[fid]||(dxCache[fid]=await fileBlob(fid));}
+async function docxPlain(blob){const t=document.createElement('div'),st=document.createElement('div');await window.docx.renderAsync(blob,t,st);return normText(t.textContent);}
+function rteBar(locked){
+  const b=(c,l,v)=>`<button type="button" data-cmd="${c}" ${v?`data-val="${v}"`:''} ${locked?'disabled':''}>${l}</button>`;
+  return `<div class="rte-bar">${b('undo','↶')}${b('redo','↷')}${b('bold','<b>B</b>')}${b('italic','<i>I</i>')}${b('underline','<u>U</u>')}${b('insertUnorderedList','• List')}${b('insertOrderedList','1. List')}${b('justifyLeft','⇤')}${b('justifyCenter','↔')}${b('justifyRight','⇥')}${b('justifyFull','☰')}</div>`;
+}
+function dxTokens(root){
+  const out=[],w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;
+  while((n=w.nextNode())){const re=/\S+/g;let m;while((m=re.exec(n.nodeValue)))out.push({node:n,start:m.index,end:m.index+m[0].length,text:m[0]});}
+  return out;
+}
+function highlightDx(root,A){
+  const B=dxTokens(root);let p=0;
+  while(p<A.length&&p<B.length&&A[p]===B[p].text)p++;
+  let q=0;while(q<A.length-p&&q<B.length-p&&A[A.length-1-q]===B[B.length-1-q].text)q++;
+  const a=A.slice(p,A.length-q),b=B.slice(p,B.length-q).map(t=>t.text),ins=new Set(),dels=[];
+  if(a.length*b.length>4e6){b.forEach((_,i)=>ins.add(p+i));if(a.length)dels.push({at:p,text:a.join(' ')});}
+  else{
+    const n=a.length,m=b.length,W=m+1,L=new Uint16Array((n+1)*W);
+    for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)L[i*W+j]=a[i]===b[j]?L[(i+1)*W+j+1]+1:Math.max(L[(i+1)*W+j],L[i*W+j+1]);
+    let i=0,j=0,pend=[];const flush=()=>{if(pend.length){dels.push({at:p+j,text:pend.join(' ')});pend=[];}};
+    while(i<n||j<m){
+      if(i<n&&j<m&&a[i]===b[j]){flush();i++;j++;}
+      else if(j<m&&(i>=n||L[i*W+j+1]>=L[(i+1)*W+j])){flush();ins.add(p+j);j++;}
+      else{pend.push(a[i]);i++;}
+    }
+    flush();
+  }
+  const acts=[];let k=0;
+  while(k<B.length){
+    if(!ins.has(k)){k++;continue;}
+    let e=k;while(e+1<B.length&&ins.has(e+1)&&B[e+1].node===B[k].node)e++;
+    acts.push({key:k*2+1,mark:[B[k].node,B[k].start,B[e].end]});k=e+1;
+  }
+  dels.forEach(d=>{const pv=B[Math.min(d.at,B.length)-1];
+    if(pv)acts.push({key:(Math.min(d.at,B.length)-1)*2+1.5,del:' '+d.text,at:[pv.node,pv.end]});
+    else if(B.length)acts.push({key:-1,del:d.text+' ',at:[B[0].node,B[0].start]});});
+  acts.sort((x,y)=>y.key-x.key).forEach(x=>{
+    const r=document.createRange();
+    if(x.mark){r.setStart(x.mark[0],x.mark[1]);r.setEnd(x.mark[0],x.mark[2]);const m=document.createElement('mark');m.className='chg';r.surroundContents(m);}
+    else{r.setStart(x.at[0],x.at[1]);r.collapse(true);const m=document.createElement('del');m.className='chg-del';m.textContent=x.del;m.title='Deleted by client';r.insertNode(m);}
+  });
+  return acts.length;
+}
+async function serializeDx(el){
+  const c=el.cloneNode(true),live=[...el.querySelectorAll('img')],cl=[...c.querySelectorAll('img')];
+  await Promise.all(live.map(async(im,i)=>{if(!/^blob:/.test(im.src))return;try{const bl=await(await fetch(im.src)).blob();cl[i].src=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(bl);});}catch(e){}}));
+  return clean(c.innerHTML,true);
+}
+async function mountDocx(stageId,isAdmin,d){
+  const body=document.getElementById('dxBody'),style=document.getElementById('dxStyle');if(!body)return;
+  try{
+    const blob=await dxBlob(d.docxFileId);if(!body.isConnected)return;
+    body.innerHTML='';
+    await window.docx.renderAsync(blob,body,style,{className:'docx',inWrapper:true,breakPages:false,ignoreLastRenderedPageBreak:true});
+    if(!body.isConnected)return;
+    const base=dxTokens(body).map(t=>t.text);
+    const ds=await getDoc(doc(db,'cases',currentCase.id,'drafts',stageId));if(!body.isConnected)return;
+    const cd=ds.exists()?ds.data():null;window._dxClientHtml=null;window._dxDraft=cd;
+    if(cd&&cd.fileId===d.docxFileId&&cd.clientHtml){window._dxClientHtml=cd.clientHtml;body.innerHTML=clean(cd.clientHtml,true);}
+    if(isAdmin){const n=window._dxClientHtml?highlightDx(body,(cd&&cd.fileId===d.docxFileId&&cd.baseText)?cd.baseText.split(' '):base):0;const ci=document.getElementById('chgInfo');if(ci)ci.textContent=n?`${n} change${n>1?'s':''} pending: yellow = added, struck-through = deleted. Right-click a change to accept or reject it.`:'The client has not changed this document.';}
+    body.contentEditable=(isAdmin||!d.editingLocked)?'true':'false';
+  }catch(e){body.innerHTML='<p style="padding:20px;color:#a23b33">Could not load the document: '+esc(e.message)+'</p>';}
+}
+async function saveDxEdit(stageId,body){
+  const d=currentCase.stages[stageId];if(!d||d.editingLocked)return;
+  const html=await serializeDx(body);if(html.length>900000){notify('Document is too large to save (max ~900 KB).',true);return;}
+  const text=normText(body.textContent);
+  await setDoc(doc(db,'cases',currentCase.id,'drafts',stageId),{fileId:d.docxFileId,clientHtml:html,updatedAt:serverTimestamp()},{merge:true});
+  await addDoc(collection(db,'cases',currentCase.id,'history'),{stageId,action:'client_edit',before:d.clientText||d.baselineText||'',after:text,actorUid:userProfile.uid,createdAt:serverTimestamp()});
+  await updateStage(stageId,{clientText:text,clientEdited:text!==(d.baselineText||'')});
+}
+function downloadDx(html,css,name){
+  const blob=window.htmlDocx.asBlob('<!DOCTYPE html><html><head><meta charset="utf-8"><style>'+css+'</style></head><body>'+html+'</body></html>');
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
+const nextEl=el=>{let n=el.nextSibling;while(n&&n.nodeType===3&&!n.nodeValue.trim())n=n.nextSibling;return n&&n.nodeType===1?n:null;};
+const prevEl=el=>{let n=el.previousSibling;while(n&&n.nodeType===3&&!n.nodeValue.trim())n=n.previousSibling;return n&&n.nodeType===1?n:null;};
+function showCtx(x,y,el,stageId){
+  document.querySelectorAll('.ctx').forEach(n=>n.remove());
+  const m=document.createElement('div');m.className='ctx';m.style.left=x+'px';m.style.top=y+'px';
+  m.innerHTML='<button data-a="1">✓ Accept change</button><button data-a="0">✕ Reject change</button>';
+  m.onclick=e=>{const b=e.target.closest('button');if(!b)return;m.remove();resolveChange(el,b.dataset.a==='1',stageId);};
+  document.body.appendChild(m);setTimeout(()=>document.addEventListener('click',()=>m.remove(),{once:true}),0);
+}
+async function resolveChange(el,accept,stageId){
+  const body=document.getElementById('dxBody'),d=currentCase.stages[stageId];if(!body||!d)return;
+  const grp=[el];
+  if(el.matches('del.chg-del')){const n=nextEl(el);if(n&&n.matches('mark.chg'))grp.push(n);}
+  else{const pv=prevEl(el);if(pv&&pv.matches('del.chg-del'))grp.unshift(pv);}
+  const prev=window._dxDraft||{};
+  (window._dxStack=window._dxStack||[]).push({stageId,clientHtml:prev.clientHtml||'',baseText:prev.baseText||''});
+  // accept: keep additions, drop deletions. reject: drop additions, restore deletions.
+  grp.forEach(x=>{const isDel=x.matches('del.chg-del');if(isDel===accept)x.remove();else x.replaceWith(...x.childNodes);});
+  const cl=body.cloneNode(true);
+  cl.querySelectorAll('mark.chg').forEach(x=>x.replaceWith(...x.childNodes));
+  cl.querySelectorAll('del.chg-del').forEach(x=>x.remove());
+  const bs=body.cloneNode(true);
+  bs.querySelectorAll('mark.chg').forEach(x=>x.remove());
+  bs.querySelectorAll('del.chg-del').forEach(x=>x.replaceWith(...x.childNodes));
+  const baseText=dxTokens(bs).map(t=>t.text).join(' ');
+  const pending=body.querySelectorAll('mark.chg,del.chg-del').length;
+  try{
+    const html=await serializeDx(cl);
+    await setDoc(doc(db,'cases',currentCase.id,'drafts',stageId),{fileId:d.docxFileId,clientHtml:html,baseText,updatedAt:serverTimestamp()},{merge:true});
+    await updateStage(stageId,{clientText:normText(cl.textContent),clientEdited:pending>0});
+    notify(accept?'Change accepted.':'Change rejected.');
+  }catch(e){notify(e.message,true);}
+}
+
+async function saveAdminEdit(stageId,body){
+  const d=currentCase.stages[stageId];if(!d||!body.isConnected)return;
+  const cl=body.cloneNode(true);
+  cl.querySelectorAll('mark.chg').forEach(x=>x.replaceWith(...x.childNodes));
+  cl.querySelectorAll('del.chg-del').forEach(x=>x.remove());
+  const bs=body.cloneNode(true);
+  bs.querySelectorAll('mark.chg').forEach(x=>x.remove());
+  bs.querySelectorAll('del.chg-del').forEach(x=>x.replaceWith(...x.childNodes));
+  const pending=body.querySelectorAll('mark.chg,del.chg-del').length,text=normText(cl.textContent);
+  try{
+    const html=await serializeDx(cl);if(html.length>900000){notify('Document is too large to save (max ~900 KB).',true);return;}
+    await setDoc(doc(db,'cases',currentCase.id,'drafts',stageId),{fileId:d.docxFileId,clientHtml:html,baseText:dxTokens(bs).map(t=>t.text).join(' '),updatedAt:serverTimestamp()},{merge:true});
+    await addDoc(collection(db,'cases',currentCase.id,'history'),{stageId,action:'admin_edit',before:d.clientText||d.baselineText||'',after:text,actorUid:userProfile.uid,createdAt:serverTimestamp()});
+    await updateStage(stageId,{clientText:text,clientEdited:pending>0});
+  }catch(e){notify(e.message,true);}
+}
+
 function renderApp(){
-  if(document.activeElement?.closest?.('.rte-body')||document.querySelector('#modalBackdrop.open'))return;
+  if(document.activeElement?.closest?.('.rte-body,.dx-body')||document.querySelector('#modalBackdrop.open'))return;
   if(!currentCase)return;
   const isAdmin=currentView==='admin';
   document.body.innerHTML=`
@@ -533,13 +679,14 @@ function renderMain(){
 
   const allFiles=currentCase._files||[];const fbtn=l=>l.map(f=>`<button class="act" style="font-size:11px;" data-fileview="${f.id}">📎 ${esc(f.name||'attachment')}</button>`).join(' ');
   const fileHtml=fbtn(allFiles.filter(f=>f.kind==='stage'&&f.refId===stage.id));
-  const rich=!!d.baselineHtml;
-  const editor = stage.approval && (d.baselineText||rich) ? `
+  const dx=d.mode==='docx'&&!!d.docxFileId;const rich=!!d.baselineHtml&&!dx;
+  const editor = stage.approval && (d.baselineText||rich||dx) ? `
     <div class="panel" style="margin-top:20px;">
       <h3>Document editor</h3>
-      <p class="explainer">${isAdmin?'The client edits a copy of your draft. Their changes are saved as versions.':'Edit the document only while your coordinator has unlocked it. Your changes autosave after you pause typing.'}</p>
-      ${isAdmin && d.clientText ? `<div style="padding:12px;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;font-size:13px;margin-bottom:12px;">${highlightChanges(d.baselineText,d.clientText)}</div>`:''}
-      ${rich ? `<div id="rteWrap">${rteHtml('richEditor',d.clientHtml||d.baselineHtml,isAdmin||!!d.editingLocked)}</div>
+      <p class="explainer">${isAdmin?'You can edit the document directly below; your edits autosave and are not marked as client changes. Client changes stay highlighted until you accept or reject them.':'Edit the document only while your coordinator has unlocked it. Your changes autosave after you pause typing.'}</p>
+      ${dx?`${isAdmin?'<div id="chgInfo" class="explainer" style="margin:0 0 10px;">Loading…</div>':''}<div class="rte" id="dxWrap">${rteBar(!isAdmin&&!!d.editingLocked)}<div id="dxStyle"></div><div class="dx-body" id="dxBody"><p style="padding:20px;opacity:.7">Loading document…</p></div></div><div class="btnrow" style="margin-top:10px;">${isAdmin?'':'<button class="act" id="undoEdits">Undo my edits</button>'}<button class="act" id="dlClient">Download ${isAdmin?'client version ':''}(.docx)</button><button class="act" id="dlOrig">Download original (.docx)</button>${isAdmin?'<button class="act" id="dxUndo">Undo last decision</button>':''}</div>`:''}
+      ${isAdmin && d.clientText && !rich && !dx ? `<div style="padding:12px;border:1px solid var(--line);border-radius:8px;white-space:pre-wrap;font-size:13px;margin-bottom:12px;">${highlightChanges(d.baselineText,d.clientText)}</div>`:''}
+      ${dx?'':rich ? `<div id="rteWrap">${rteHtml('richEditor',d.clientHtml||d.baselineHtml,isAdmin||!!d.editingLocked)}</div>
         <div class="btnrow" style="margin-top:10px;">${isAdmin?'':'<button class="act" id="undoEdits">Undo my edits</button>'}<button class="act" id="dlClient">Download ${isAdmin?'client version ':''}(.docx)</button>${isAdmin?'<button class="act" id="dlBase">Download original (.docx)</button>':''}</div>`
       : (!isAdmin ? `<textarea id="clientEditor" ${d.editingLocked?'disabled':''} style="width:100%;min-height:260px;font-family:var(--sans);font-size:13px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);">${esc(d.clientText||d.baselineText)}</textarea>
       <div class="btnrow" style="margin-top:10px;"><button class="act" id="undoEdits">Undo my edits</button></div>`:'')}
@@ -568,6 +715,27 @@ function renderMain(){
   const rw=document.getElementById('rteWrap');
   if(rw&&!isAdmin){let t;const body=rw.querySelector('.rte-body');wireRte(rw,()=>{clearTimeout(t);t=setTimeout(()=>saveClientEdit(stage.id,htmlText(body.innerHTML),body.innerHTML),900);});
     document.getElementById('undoEdits').onclick=()=>saveClientEdit(stage.id,d.baselineText||'',d.baselineHtml);}
+  if(rich&&isAdmin&&d.clientHtml){const rb=document.getElementById('richEditor'),tmp=document.createElement('div');tmp.innerHTML=clean(d.baselineHtml);highlightDx(rb,dxTokens(tmp).map(t=>t.text));}
+  if(dx){
+    const wrap=document.getElementById('dxWrap'),body=document.getElementById('dxBody'),sty=document.getElementById('dxStyle');
+    mountDocx(stage.id,isAdmin,d);
+    if(!isAdmin){
+      let t;wireRte(wrap,()=>{clearTimeout(t);t=setTimeout(()=>saveDxEdit(stage.id,body),900);});
+      document.getElementById('undoEdits').onclick=async()=>{await setDoc(doc(db,'cases',currentCase.id,'drafts',stage.id),{fileId:d.docxFileId,clientHtml:'',baseText:'',updatedAt:serverTimestamp()});await updateStage(stage.id,{clientText:d.baselineText||'',clientEdited:false});};
+    }
+    const origDl=async()=>{try{const bl=await dxBlob(d.docxFileId);const a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=d.docxName||'document.docx';a.click();}catch(e){notify(e.message,true);}};
+    document.getElementById('dlOrig').onclick=origDl;
+    if(isAdmin){
+      body.oncontextmenu=e=>{const el=e.target.closest('mark.chg,del.chg-del');if(!el)return;e.preventDefault();showCtx(e.clientX,e.clientY,el,stage.id);};
+      let at;wireRte(wrap,()=>{clearTimeout(at);at=setTimeout(()=>saveAdminEdit(stage.id,body),900);});
+      const dxu=document.getElementById('dxUndo'),has=()=>(window._dxStack||[]).some(x=>x.stageId===stage.id);
+      dxu.disabled=!has();
+      dxu.onclick=async()=>{const st=window._dxStack||[];const i=st.map(x=>x.stageId).lastIndexOf(stage.id);if(i<0)return;const [pv]=st.splice(i,1);
+        try{await setDoc(doc(db,'cases',currentCase.id,'drafts',stage.id),{fileId:d.docxFileId,clientHtml:pv.clientHtml,baseText:pv.baseText,updatedAt:serverTimestamp()},{merge:true});await updateStage(stage.id,{clientEdited:true});notify('Decision undone.');}catch(e){notify(e.message,true);}};
+      document.onkeydown=e=>{if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.target.closest?.('[contenteditable=true],textarea,input')&&has())dxu.click();};
+    }
+    document.getElementById('dlClient').onclick=()=>{const h=isAdmin?window._dxClientHtml:body.innerHTML;if(!h)return origDl();downloadDx(h,sty.textContent,'client-version.docx');};
+  }
   if(!isAdmin){
     document.querySelectorAll('[data-doc]').forEach(b=>b.onclick=()=>uploadFile('document',b.dataset.doc));
     const ed=document.getElementById('clientEditor');
@@ -581,13 +749,9 @@ function renderMain(){
 
 function highlightChanges(base,edited){
   if(base===edited)return esc(edited);
-  // Lightweight character diff suitable for a review view; history retains exact versions.
   let prefix=0; while(prefix<base.length&&prefix<edited.length&&base[prefix]===edited[prefix])prefix++;
   let suffix=0; while(suffix<base.length-prefix&&suffix<edited.length-prefix&&base[base.length-1-suffix]===edited[edited.length-1-suffix])suffix++;
-  return esc(base.slice(0,prefix))+
-    `<del style="color:var(--danger);background:rgba(162,59,51,.08);">${esc(base.slice(prefix,base.length-suffix))}</del>`+
-    `<ins style="color:var(--green);background:var(--green-soft);text-decoration:none;">${esc(edited.slice(prefix,edited.length-suffix))}</ins>`+
-    esc(base.slice(base.length-suffix));
+  return esc(edited.slice(0,prefix))+`<mark class="chg">${esc(edited.slice(prefix,edited.length-suffix))}</mark>`+esc(edited.slice(edited.length-suffix));
 }
 
 async function toggleFlag(key){
@@ -631,12 +795,28 @@ function openRequestModal(stageId){
   document.getElementById('rcNo').onclick=closeModal;document.getElementById('rcYes').onclick=async()=>{const t=document.getElementById('rcText').value.trim();if(!t)return;closeModal();await updateStage(stageId,{status:'in_progress'});await sendMessage(stageId,'client','Requesting changes: '+t);};
 }
 function openSendModal(stageId){
-  const d=currentCase.stages[stageId];
-  openModal(`<h4>${d.status==='waiting_client'?'Resend revised draft':'Send draft for review'}</h4><p>Upload a Word document (.docx) or write/paste the draft below. The client gets a Word-style editor with this as the baseline. Images are not carried over.</p><input type="file" id="draftFile" accept=".docx" style="margin-bottom:10px;"><div id="draftRte">${rteHtml('draftEditor',d.baselineHtml||esc(d.baselineText||d.clientText||'').replace(/\n/g,'<br>'),false)}</div><div class="btnrow"><button class="act" id="dsNo">Cancel</button><button class="act primary" id="dsYes">Send to client</button></div>`);
+  const d=currentCase.stages[stageId];let picked=null;
+  openModal(`<h4>${d.status==='waiting_client'?'Resend revised draft':'Send draft for review'}</h4><p>Upload your Word document (.docx). It is shown to the client exactly as you made it, fonts and layout included, and they edit it in place. Or leave the file empty and type a plain draft below.</p><input type="file" id="draftFile" accept=".docx" style="margin-bottom:10px;"><div id="draftRte">${rteHtml('draftEditor',d.mode==='docx'?'':(d.baselineHtml||esc(d.baselineText||d.clientText||'').replace(/\n/g,'<br>')),false)}</div><div class="btnrow"><button class="act" id="dsNo">Cancel</button><button class="act primary" id="dsYes">Send to client</button></div>`);
   const wrap=document.getElementById('draftRte'),body=wrap.querySelector('.rte-body');wireRte(wrap);
-  document.getElementById('draftFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const r=await window.mammoth.convertToHtml({arrayBuffer:await f.arrayBuffer()},{convertImage:window.mammoth.images.imgElement(()=>Promise.resolve({src:''}))});body.innerHTML=clean(r.value);}catch(err){notify('Could not read that .docx: '+err.message,true);}};
+  document.getElementById('draftFile').onchange=e=>{picked=e.target.files[0]||null;wrap.style.display=picked?'none':'';};
   document.getElementById('dsNo').onclick=closeModal;
-  document.getElementById('dsYes').onclick=async()=>{const html=clean(body.innerHTML),text=htmlText(html).trim();if(!text)return;if(html.length>120000){notify('Document too large (max ~120 KB). Shorten or split it.',true);return;}closeModal();await addDoc(collection(db,'cases',currentCase.id,'history'),{stageId,action:'baseline_publish',before:d.baselineText||'',after:text,actorUid:userProfile.uid,createdAt:serverTimestamp()});await updateStage(stageId,{baselineHtml:html,baselineText:text,clientHtml:html,clientText:text,clientEdited:false,status:'waiting_client',editingLocked:false});await sendMessage(stageId,'staff','A draft has been sent for your review.');};
+  document.getElementById('dsYes').onclick=async()=>{
+    const hist=text=>addDoc(collection(db,'cases',currentCase.id,'history'),{stageId,action:'baseline_publish',before:d.baselineText||'',after:text,actorUid:userProfile.uid,createdAt:serverTimestamp()});
+    if(picked){
+      closeModal();
+      try{
+        const text=await docxPlain(picked);const fid=await uploadFile('draft',stageId,picked);if(!fid)return;
+        await hist(text);
+        await updateStage(stageId,{mode:'docx',docxFileId:fid,docxName:picked.name,baselineHtml:'',clientHtml:'',baselineText:text,clientText:text,clientEdited:false,status:'waiting_client',editingLocked:false});
+        await sendMessage(stageId,'staff','A draft has been sent for your review.');
+      }catch(err){notify('Could not send that .docx: '+err.message,true);}
+      return;
+    }
+    const html=clean(body.innerHTML),text=htmlText(html).trim();if(!text)return;if(html.length>120000){notify('Document too large (max ~120 KB).',true);return;}
+    closeModal();await hist(text);
+    await updateStage(stageId,{mode:'rich',docxFileId:'',baselineHtml:html,baselineText:text,clientHtml:html,clientText:text,clientEdited:false,status:'waiting_client',editingLocked:false});
+    await sendMessage(stageId,'staff','A draft has been sent for your review.');
+  };
 }
 function openAttachModal(stageId){
   openModal(`<h4>Mark stage as done</h4><p>Add a proof note. File upload is handled through the Firestore chunk uploader below.</p><textarea id="proofText" style="min-height:80px;"></textarea><input type="file" id="proofFile" accept="application/pdf,image/*"><div class="btnrow"><button class="act" id="pfNo">Cancel</button><button class="act primary" id="pfYes">Mark done</button></div>`);
@@ -667,7 +847,7 @@ async function uploadFile(kind,refId,file=null){
     const data=btoa(binary);
     await setDoc(doc(fileRef,'chunks',String(Math.floor(i/chunkSize)).padStart(6,'0')),{data,createdAt:serverTimestamp()});
   }
-  notify('File uploaded.');
+  notify('File uploaded.');return fileRef.id;
 }
 
 function renderAdmin(){
